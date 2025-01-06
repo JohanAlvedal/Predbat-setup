@@ -1,12 +1,13 @@
-alias: EMHASS  Discharging power (limited power)
 sequence:
   - condition: template
-    value_template: >-
-      {{ states('number.battery_maximum_discharging_power') | int(0) !=
-      states('sensor.limited_power') | int(0) | abs }}
-  - data:
-      value: "{{ (states('sensor.limited_power') | int(0) | abs) }}"
-    target:
-      entity_id: number.battery_maximum_discharging_power
+    value_template: |
+      {{ states('number.battery_maximum_charging_power') | int(0) != 
+        (states('sensor.limited_power') | int(0) | abs ) | int }}
+  - target:
+      entity_id: number.battery_maximum_charging_power
+    data:
+      value: "{{ (states('sensor.limited_power') | int(0) | abs ) | int }}"
     action: number.set_value
-description: "Perform action 'Number: Set' on Batteries Maximum discharging power"
+alias: Huawei limited power charge
+description: Set the Batteries Maximum discharging power dynamically
+icon: mdi:battery-charging-20
