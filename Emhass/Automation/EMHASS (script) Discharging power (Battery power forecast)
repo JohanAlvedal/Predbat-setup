@@ -1,12 +1,13 @@
-alias: EMHASS  Discharging power (Battery power forecast)
+alias: Huawei Battery Power Forecast discharge
 sequence:
   - condition: template
-    value_template: >-
-      {{ states('number.battery_maximum_discharging_power') | int(0) !=
-      states('sensor.p_batt_forecast') | int(0) | abs }}
-  - data:
-      value: "{{ (states('sensor.p_batt_forecast') | int(0) | abs) }}"
-    target:
+    value_template: |
+      {{ states('number.battery_maximum_discharging_power') | int(0) != 
+        (states('sensor.p_batt_forecast') | int(0) | abs / 0.95) | int }}
+  - target:
       entity_id: number.battery_maximum_discharging_power
+    data:
+      value: "{{ (states('sensor.p_batt_forecast') | int(0) | abs / 0.95) | int }}"
     action: number.set_value
-description: "Perform action 'Number: Set' on Batteries Maximum discharging power"
+description: Set the Batteries Maximum discharging power dynamically
+icon: mdi:battery-charging-20
