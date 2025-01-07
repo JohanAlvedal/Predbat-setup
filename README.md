@@ -71,7 +71,7 @@ This project is a **work in progress**, and I’m continuously improving the set
 
 ---
 
-This README is written for sharing my setup, but I’m open to suggestions and feedback. Feel free to reach out or contribute to the project! 😊  
+This README is written for sharing my setup, but I’m open to suggestions and feedback. Feel free to reach out or contribute 😊  
 
 ---
 
