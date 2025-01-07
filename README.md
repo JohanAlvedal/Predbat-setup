@@ -1,4 +1,4 @@
-Here’s a **shortened and updated version** of your README, with a **disclaimer** and directions to explore specific folders for more details:  
+Here’s the updated version with a link to Home Assistant added:  
 
 ---
 
@@ -14,7 +14,7 @@ These tools integrate with Home Assistant to reduce energy costs and maximize th
 ---
 
 ## **Setup Components**  
-1. **Home Assistant**: The core platform managing all automations and integrations.  
+1. **[Home Assistant](https://www.home-assistant.io/)**: The core platform managing all automations and integrations.  
 2. **[Nordpool Integration](https://github.com/custom-components/nordpool)**: Fetches real-time electricity prices for cost optimization.  
 3. **Huawei Inverter and 10kW Battery**: Stores solar energy and powers the home during peak price periods.  
 4. **[Tibber Integration](https://www.home-assistant.io/integrations/tibber/)**: Provides additional electricity price insights.  
@@ -38,6 +38,6 @@ I am not an expert in programming, energy management, or automation. This setup 
 Special thanks to:  
 - **[EMHASS by davidusb-geek](https://github.com/davidusb-geek)**  
 - **[Predbat by arti5020](https://github.com/arti5020/predbat)**  
-- The **Home Assistant Community** for their support and resources.  
+- The **[Home Assistant Community](https://community.home-assistant.io/)** for their support and resources.  
 
 ---
