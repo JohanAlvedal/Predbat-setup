@@ -1,7 +1,3 @@
-Here’s a **GitHub-optimized version** of your project description, formatted and styled to fit well in a `README.md` file:  
-
----
-
 # **Welcome to My EMHASS and Predbat Setup**  
 
 ## **Overview**  
