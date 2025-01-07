@@ -2,12 +2,10 @@
 ####                        START                                           ####
 ################################################################################
 ## temperatur.nu
-temperatur_nu: "/usr/bin/curl http://www.temperatur.nu/rapportera.php?hash=XXXXXX={{ states('sensor.temperatur_nu') }}"
+temperatur_nu: "/usr/bin/curl http://www.temperatur.nu/rapportera.php?hash=XXXXXXXXXXXXXXXXXXXXX={{ states('sensor.temperatur_nu') }}"
 
 # EMHASS
 publish_data: 'curl -i -H "Content-Type:application/json" -X POST -d ''{}'' http://localhost:5000/action/publish-data'
-
-update_weather_cache: "curl -i -H 'Content-Type:application/json' -X POST -d '{}' http://localhost:5000/action/weather-forecast-cache"
 
 ml_forecast_model_fit: >
   curl -i -H "Content-Type:application/json" -X POST -d 
@@ -39,73 +37,15 @@ load_and_pv_forecast: >
 dayahead_optim: >
   curl -i -H 'Content-Type: application/json' -X POST -d '{
     "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prod_price_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prod_price_forecast":{{((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
     "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},    
-    "weather_forecast_cache_only": True,
     "delta_forecast_daily": 2
   }' http://localhost:5000/action/dayahead-optim
 
-post_naive_mpc_shell_noendstep: >
+post_naive_mpc_org: >
   curl -i -H "Content-Type: application/json" -X POST -d '{
     "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prod_price_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
-    "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
-    "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
-    "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
-    "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
-    "P_deferrable_nom": [{{ [states('sensor.go_echarger_265216_nrg_12')|int, 3000]|max }}, 0],
-    "weight_battery_discharge": 0.15,
-    "weight_battery_charge": 0.07,
-    "delta_forecast_daily":2,
-    "alpha": 1,
-    "beta": 0,
-    "def_total_hours":[{{ states('sensor.charger_def_hours') | default(0) }}, 0],
-    "def_end_timestep": [0, 0]
-  }' http://localhost:5000/action/naive-mpc-optim
-
-post_naive_mpc_shell: >
-  curl -i -H "Content-Type: application/json" -X POST -d '{
-    "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prod_price_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:48]|list|length)))}},
-    "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
-    "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
-    "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
-    "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
-    "P_deferrable_nom": [{{ [states('sensor.go_echarger_265216_nrg_12')|int, 3000]|max }}, 0],
-    "weight_battery_discharge": 0.15,
-    "weight_battery_charge": 0.07,
-    "delta_forecast_daily":2,
-    "alpha": 1,
-    "beta": 0,
-    "def_total_hours":[{{ states('sensor.charger_def_hours') | default(0) }}, 0],
-    "def_end_timestep": [{{ max(0, states("sensor.def0_end_timestep") | int(0)) }}, 0]
-  }' http://localhost:5000/action/naive-mpc-optim
-
-post_naive_mpc_shell_carnow: >
-  curl -i -H "Content-Type: application/json" -X POST -d '{
-    "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prod_price_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
-    "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
-    "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
-    "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
-    "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
-    "P_deferrable_nom": [{{ [states('sensor.go_echarger_265216_nrg_12')|int, 3000]|max }}, 0],
-    "weight_battery_discharge": 0.15,
-    "weight_battery_charge": 0.07,
-    "delta_forecast_daily":2,
-    "alpha": 1,
-    "beta": 0,
-    "def_total_hours":[{{ states('sensor.charger_def_hours') | default(0) }}, 0],
-    "def_end_timestep":[{{ states('sensor.endslots') | default(0) }}, 0]
-  }' http://localhost:5000/action/naive-mpc-optim
-
-post_naive_mpc_shell_nocar: >
-  curl -i -H "Content-Type: application/json" -X POST -d '{
-    "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prod_price_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prod_price_forecast":{{((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
     "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
     "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
     "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
@@ -114,17 +54,16 @@ post_naive_mpc_shell_nocar: >
     "P_deferrable_nom": [{{ states('sensor.go_echarger_265216_nrg_12')|int }}, 0],
     "weight_battery_discharge": 0.15,
     "weight_battery_charge": 0.07,
-    "delta_forecast_daily":2,
     "alpha": 1,
     "beta": 0,
-    "def_total_hours":[0, 0],
-    "def_end_timestep":[0, 0]
+    "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
+    "def_end_timestep":[0]
   }' http://localhost:5000/action/naive-mpc-optim
-
-post_naive_mpc_shell_thermal: >
+  
+post_naive_mpc_carnow: >
   curl -i -H "Content-Type: application/json" -X POST -d '{
     "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-    "prod_price_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prod_price_forecast":{{((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
     "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
     "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
     "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
@@ -133,37 +72,12 @@ post_naive_mpc_shell_thermal: >
     "P_deferrable_nom": [{{ states('sensor.go_echarger_265216_nrg_12')|int }}, 0],
     "weight_battery_discharge": 0.15,
     "weight_battery_charge": 0.07,
-    "delta_forecast_daily":2,
     "alpha": 1,
     "beta": 0,
-    "def_total_hours":[0, 0],
-    "def_end_timestep":[0, 0],
-    "outdoor_temperature_forecast": {{
-      (state_attr("sensor.emhass_half_hourly_outside_temperatures", "temperatures") | list)[:min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))] +
-      [state_attr("sensor.emhass_half_hourly_outside_temperatures", "temperatures")[-1]] * 
-      (min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length))) - (state_attr("sensor.emhass_half_hourly_outside_temperatures", "temperatures") | list | length))
-    }}
+    "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
+    "def_end_timestep":[0]
   }' http://localhost:5000/action/naive-mpc-optim
 
-# "outdoor_temperature_forecast": {{ state_attr("sensor.emhass_half_hourly_outside_temperatures", "temperatures") | tojson }}
-#   post_naive_mpc_shell_nocar: >
-# curl -i -H "Content-Type:application/json" -X POST -d '{{payload}}' http://localhost:5000/action/naive-mpc-optim
-#   post_naive_mpc_shell_carnow: >
-#     curl -i -H "Content-Type:application/json" -X POST -d '{{payload}}' http://localhost:5000/action/naive-mpc-optim
-#   post_naive_mpc_shell: >
-#     curl -i -H "Content-Type:application/json" -X POST -d '{{payload}}' http://localhost:5000/action/naive-mpc-optim
-#   post_naive_mpc_shell_noendstep: >
-#     curl -i -H "Content-Type:application/json" -X POST -d '{{payload}}' http://localhost:5000/action/naive-mpc-optim
-#   dayahead_optim: >
-#     curl -i -H "Content-Type:application/json" -X POST -d '{{payload}}' http://localhost:5000/action/dayahead-optim
-
-##############################################
-# fit_heating_hours: >
-#   curl -i -H "Content-Type:application/json" -X POST -d '{
-#     "csv_file": "heating_prediction.csv", "features": ["degreeday", "solar"],
-#     "target": "hour", "regression_model": "RandomForevstRegression", "model_type": "heating_hours_degreeday",
-#     "timestamp": "timestamp", "date_features": ["month", "day_of_week"],
-#     "new_values": [12.79, 4.766, 1, 2] }' http://localhost:5000/action/regressor-model-fit
 ################################################################################
 ###                            END                                           ###
 ################################################################################
