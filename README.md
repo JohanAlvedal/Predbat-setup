@@ -1,4 +1,4 @@
-Here’s the updated version with a link to Home Assistant added:  
+Here’s the revised version with all links corrected and verified:  
 
 ---
 
@@ -7,9 +7,9 @@ Here’s the updated version with a link to Home Assistant added:
 ## **Overview**  
 This project optimizes energy consumption in my smart home using two powerful tools:  
 - **[EMHASS (Energy Management for Home Assistant)](https://github.com/davidusb-geek/emhass)**  
-- **[Predbat (Home Battery Prediction)](https://github.com/arti5020/predbat)**  
+- **[Predbat (Home Battery Prediction)](https://github.com/springfall2008/predbat)**  
 
-These tools integrate with Home Assistant to reduce energy costs and maximize the efficiency of my 10kW home battery.  
+These tools integrate with **[Home Assistant](https://www.home-assistant.io/)** to reduce energy costs and maximize the efficiency of my 10kW home battery.  
 
 ---
 
@@ -23,9 +23,9 @@ These tools integrate with Home Assistant to reduce energy costs and maximize th
 ---
 
 ## **Explore More**  
-Configurations, and examples for each component are available in their respective folders:  
+Configurations and examples for each component are available in their respective folders:  
 - **EMHASS**  
-- **Predbat** 
+- **Predbat**
 
 ---
 
@@ -36,8 +36,12 @@ I am not an expert in programming, energy management, or automation. This setup 
 
 ## **Acknowledgments**  
 Thanks to:  
-- **[davidusb-geek](https://github.com/davidusb-geek)** for EMHASS.  
+- **[davidusb-geek](https://github.com/davidusb-geek)** for creating EMHASS.  
 - **[springfall2008](https://github.com/springfall2008)** for creating Predbat.  
 - The **[Home Assistant Community](https://community.home-assistant.io/)** for their invaluable resources.  
-- **Tibber** for energy data and insights.  
-- **Solcast** for solar forecasting.  
+- **[Tibber](https://www.tibber.com/)** for energy data and insights.  
+- **[Solcast](https://solcast.com/)** for solar forecasting.  
+
+---
+
+This version ensures all links are accurate and functional. Let me know if there’s anything else you’d like adjusted!
