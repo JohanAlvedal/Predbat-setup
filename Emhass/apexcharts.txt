@@ -1,3 +1,6 @@
+=============================================
+ EMHASS Forecasts
+=============================================
 type: custom:apexcharts-card
 span:
   start: minute
@@ -46,8 +49,9 @@ series:
       return entity.attributes.deferrables_schedule.map((entry) => {
         return [new Date(entry.date), entry.p_deferrable0];
       });
-
-#####################################################################################################
+=============================================
+ Tibber Electricty Forecast
+=============================================
 
 type: custom:apexcharts-card
 experimental:
@@ -96,7 +100,9 @@ yaxis:
       min: undefined
       max: undefined
 
-#####################################################################################################
+=============================================
+Battery, Price & Cost Forecast
+=============================================
 
 type: custom:apexcharts-card
 experimental:
@@ -183,7 +189,9 @@ yaxis:
 view_layout:
   position: main
 
-#####################################################################################################
+=============================================
+Optimizer
+=============================================
 
 type: custom:apexcharts-card
 span:
@@ -259,7 +267,9 @@ series:
     yaxis_id: price
     float_precision: 3
 
-#####################################################################################################
+=============================================
+EMHASS Daily Forecast
+=============================================
 
 type: custom:apexcharts-card
 span:
