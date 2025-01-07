@@ -1,7 +1,3 @@
-Here’s the updated GitHub-optimized README that includes **Solcast** and **Tibber** integrations:  
-
----
-
 # **EMHASS Setup in Home Assistant**  
 
 ## **Overview**  
