@@ -1,5 +1,3 @@
----
-
 # **Predbat Setup in Home Assistant**  
 
 ## **Overview**  
