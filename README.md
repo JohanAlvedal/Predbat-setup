@@ -24,8 +24,8 @@ These tools integrate with Home Assistant to reduce energy costs and maximize th
 
 ## **Explore More**  
 Configurations, and examples for each component are available in their respective folders:  
-- [**EMHASS Setup**]  
-- [**Predbat Setup**] 
+- **EMHASS**  
+- **Predbat** 
 
 ---
 
