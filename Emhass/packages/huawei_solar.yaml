@@ -1,0 +1,288 @@
+# ################################################################################
+# #         -----------------------------------------------------                #
+# #         HUAWEI SOLAR DATA - Power, Energy and Economy Sensors                #
+# #         -----------------------------------------------------                #
+# #                                                                              #
+# # This is a package file with the sensors included in Huawei Solar by Johan71  #
+# #                                                                              #
+# ################################################################################
+
+sensor:
+
+  - platform: integration
+    source: sensor.input_power_with_efficiency_loss
+    name: solar_energy_riemann
+    round: 3
+    unit_prefix: k
+    unit_time: h
+    method: left
+    
+#### Separate battery sensors for charge/discharge
+  - platform: template
+    sensors:
+     
+      # Sensor that reports the charging power of the battery
+      battery_charge_only:
+        friendly_name: "Battery Charge Only"
+        unit_of_measurement: "W"
+        device_class: power
+        value_template: "{{ max(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
+        
+      # Sensor that reports the discharging power of the battery
+      battery_discharge_only:
+        friendly_name: "Battery Discharge Only"
+        unit_of_measurement: "W"
+        device_class: power
+        value_template: "{{ -min(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
+        
+################################################################################    
+
+      # Inverter calculations
+      input_power_with_efficiency_loss:
+        friendly_name: "Input Power with Efficiency Loss"
+        unique_id: "input_power_with_efficiency_loss"
+        unit_of_measurement: "W"
+        device_class: power
+        value_template: >-
+          {% set inverter_rating = 10000 %} {# adjust this value to the rated power of your inverter #}
+          {% set inpower = states('sensor.inverter_input_power')|float(0) %}
+          {% if inpower < (inverter_rating*0.1) %}
+            {{ inpower * 0.90 }}
+          {% elif inpower < (inverter_rating*0.2) %}  
+            {{ inpower * 0.95 }}
+          {% else %}
+            {{ inpower * 0.98 }}
+          {% endif %}
+      
+      # Energy PV
+      energy_pv:
+        friendly_name: "PV Energy"
+        unique_id: "PV_Energy"
+        device_class: energy
+        unit_of_measurement: 'kWh'
+        value_template: >
+          {{ (states('sensor.inverter_total_yield') | float(0)) - (states('sensor.battery_total_discharge') | float(0)) + (states('sensor.battery_total_charge') | float(0)) }}
+
+      # PV Daily
+      energy_pv_daily:
+        friendly_name: "PV Energy Daily"
+        unique_id: "PV_Energy_daily"
+        device_class: energy
+        unit_of_measurement: 'kWh'
+        value_template: >
+          {{ (states('sensor.inverter_daily_yield') | float(0)) - (states('sensor.battery_day_discharge') | float(0)) + (states('sensor.battery_day_charge') | float(0)) }}        
+
+####### Extra template sensors - do not modify #################################
+      # Grid to battery
+      grid_to_battery:
+        unique_id: grid_to_battery
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set inv = states('sensor.inverter_active_power')|int(default=0) %}
+          {% if inv < 0 %} {{ 0 - inv | int }}
+          {% else %} 0
+          {% endif %}
+      
+      # Grid to house
+      grid_to_house:
+        unique_id: grid_to_house
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set inv = states('sensor.inverter_active_power')|int(default=0) %}
+          {% set grid = states('sensor.power_meter_active_power')|int(default=0) %}
+          {% if grid < 0 %}
+            {% if inv < 0 %} {{ inv - grid | int }}
+            {% else %} {{ 0 - grid | int }}
+            {% endif %}
+          {% else %} 0
+          {% endif %}
+      
+      # Solar to battery
+      solar_to_battery:
+        unique_id: solar_to_battery
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set inv = states('sensor.inverter_input_power')|int(default=0) %}
+          {% set bat = states('sensor.battery_charge_discharge_power')|int(default=0) %}
+          {% set out = states('sensor.inverter_active_power')|int(default=0) %}
+          {% if bat > 0 %}
+            {% if out < 0 %} {{ inv }}
+            {% else %}  {{ bat }}
+            {% endif %}
+          {% else %} 0
+          {% endif %}
+      
+      # Solar to house
+      solar_to_house:
+        unique_id: solar_to_house
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set grid = states('sensor.power_meter_active_power')|int(default=0) %}
+          {% set out = states('sensor.inverter_active_power')|int(default=0) %}
+          {% set bat = states('sensor.battery_charge_discharge_power')|int(default=0) %}
+          {% if out > 0 %}
+            {% if grid > 0 %}
+              {% if bat > 0 %} {{ out - grid }}
+              {% else %} {{ out + bat - grid | abs }}
+              {% endif %}
+            {% else %}
+              {% if bat > 0 %} {{ out }}
+              {% else %} {{ out + bat | abs }}
+              {% endif %}
+            {% endif %}
+          {% else %} 0
+          {% endif %}
+      
+      # Solar power that house consumes
+      solar_power_consumed:
+        friendly_name: "Solar Power Consumed"
+        unique_id: "solar_power_consumed"
+        unit_of_measurement: "W"
+        value_template: >
+          {% set house_power = states('sensor.house_consumption_power') | float(0) %}
+          {% set inverter_power = states('sensor.inverter_input_power') | float(0) %}
+          {% if house_power > inverter_power %}
+            {{ inverter_power }}
+          {% else %}
+            {{ house_power }}
+          {% endif %}
+        availability_template: >
+          {{ states('sensor.house_consumption_power') | is_number and states('sensor.inverter_input_power') | is_number }}
+
+      # Solar to grid
+      solar_to_grid:
+        unique_id: solar_to_grid
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set grid = states('sensor.power_meter_active_power')|int(default=0) %}
+          {% set out = states('sensor.inverter_active_power')|int(default=0) %}
+          {% if out > 0 and grid > 0 %} {{ grid }}
+          {% else %} 0
+          {% endif %}
+      
+      # Battery to grid
+      battery_to_grid:
+        unique_id: battery_to_grid
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set inv = states('sensor.inverter_active_power')|int(default=0) %}
+          {% set bat = states('sensor.battery_charge_discharge_power')|int(default=0) %}
+          {% set grid = states('sensor.power_meter_active_power')|int(default=0) %}
+          {% if grid > 0 and bat < 0 and inv > grid %}
+            {% if grid - inv - bat >= 0 %} {{ grid - inv - bat }}
+            {% else %} 0
+            {% endif %}
+          {% else %} 0
+          {% endif %}
+      
+      # Battery to house
+      battery_to_house:
+        unique_id: battery_to_house
+        device_class: power
+        unit_of_measurement: "W"
+        value_template: >
+          {% set bat = states('sensor.battery_charge_discharge_power')|int(default=0) %}
+          {% set togrid = states('sensor.battery_to_grid')|int(default=0) %}
+          {% if bat < 0 %} {{ togrid - bat | int }}
+          {% else %} 0
+          {% endif %}
+      
+      # Battery status - charging, idle, or discharging
+      battery_status:
+        friendly_name: "Battery Status"
+        value_template: >
+          {% set charge_discharge_power = states('sensor.battery_charge_discharge_power') | float(default=0) %}
+          {% if charge_discharge_power > 0 %}
+            Charging
+          {% elif charge_discharge_power < 0 %}
+            Discharging
+          {% else %}
+            Idle
+          {% endif %}
+      
+      # House power consumption from Grid #### Data for EMHASS #####
+      house_power_from_grid_w:
+        unique_id: house_power_from_grid_w
+        friendly_name: "House Power Consumption from Grid"
+        unit_of_measurement: "W"
+        value_template: >
+          {% set buy_power = states('sensor.power_meter_active_power') | float(0) %}
+          {% set battery_charge_discharge_power = states('sensor.battery_charge_discharge_power') | float(0) %}
+          {% set pv_power = states('sensor.inverter_input_power') | float(0) %}
+          {% set grid_power = buy_power - pv_power + battery_charge_discharge_power  %}
+          {{ min(0, grid_power) }}
+      
+      ########### Power Meter - Calculates the Active Power being consumed in the house from grid, inverters & battery ###########
+      house_consumption_power:
+        friendly_name: "House Consumption - Power"
+        unique_id: house_consumption_power
+        unit_of_measurement: "W"
+        availability_template: >
+          {{ states('sensor.inverter_active_power') | is_number and states('sensor.power_meter_active_power') | is_number }}
+        value_template: >
+          {% set inverters_power = states('sensor.inverter_active_power') | float(default=0) %}
+          {% set power_meter_power = states('sensor.power_meter_active_power') | float(default=0) %}
+          {{ max(0, (inverters_power - power_meter_power)) }}
+      
+      # Solar power to the home
+      house_power_from_solar_w:
+        unique_id: house_power_from_solar_w
+        friendly_name: "House Power Consumption from Solar"
+        unit_of_measurement: "W"
+        value_template: >
+          {% set inv_power = states('sensor.inverter_input_power') | float(0) %}
+          {{ max(0, inv_power) }}
+      
+    #   ########### SCHEDULED SoC (Battery State of Charge ) (EMHASS) ###########
+    #   soc_scheduled_value:
+    #     friendly_name: "SoC Scheduled"
+    #     unique_id: soc_scheduled_value
+    #     unit_of_measurement: "%"
+    #     device_class: "battery"
+    #     value_template: >
+    #       {% set battery_scheduled_soc = state_attr('sensor.soc_batt_forecast', 'battery_scheduled_soc') %}
+    #       {% if battery_scheduled_soc is not none and battery_scheduled_soc|length > 0 %}
+    #         {{ battery_scheduled_soc[0] }}
+    #       {% else %}
+    #         0
+    #       {% endif %}
+
+### Automation 1: Do not feed to grid when power price becomes negative ###
+# automation:
+#   - alias: "Do not feed to grid when power price becomes negative"
+#     description: "Do not feed to grid when power price becomes negative"
+#     mode: single
+#     trigger:
+#       - platform: numeric_state
+#         entity_id: sensor.nordpool_tibber
+#         below: 0
+#     action:
+#       - service: huawei_solar.set_maximum_feed_grid_power_percent
+#         data:
+#           power_percentage: 0
+#           # Use the visual editor to select the correct 'Inverter' device from the list. HA will then set the correct `device_id` for you.
+#           device_id: 877400bca09c5e673ff27b201c71d371
+
+# ### Automation 2: Allow inverter to export electricity to grid when price becomes positive ###
+#   - alias: "Allow inverter to export electricity to grid when price becomes positive"
+#     description: "Allow inverter to export electricity to grid when price becomes positive"
+#     mode: single
+#     trigger:
+#       - platform: numeric_state
+#         entity_id: sensor.nordpool_tibber
+#         above: 0
+#     condition: []
+#     action:
+#       - service: huawei_solar.reset_maximum_feed_grid_power
+#         data:
+#           device_id: 877400bca09c5e673ff27b201c71d371
+
+################################################################################
+#  END OF PACKAGE FILE                                  
+################################################################################
