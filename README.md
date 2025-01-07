@@ -35,9 +35,8 @@ I am not an expert in programming, energy management, or automation. This setup 
 ---
 
 ## **Acknowledgments**  
-Special thanks to:  
-- **[EMHASS by davidusb-geek](https://github.com/davidusb-geek)**  
-- **[Predbat by arti5020](https://github.com/arti5020/predbat)**  
-- The **[Home Assistant Community](https://community.home-assistant.io/)** for their support and resources.  
+Thanks to:  
+- **[springfall2008](https://github.com/springfall2008)** for creating Predbat.  
+- The **[Home Assistant Community](https://community.home-assistant.io/)** for their invaluable resources.  
 
 ---
