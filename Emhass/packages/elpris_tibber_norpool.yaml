@@ -1,0 +1,40 @@
+################################################################################
+#                Detta är till för elpriserna                                  #
+################################################################################
+sensor:
+  - platform: rest
+    name: Tibber prices
+    resource: https://api.tibber.com/v1-beta/gql
+    method: POST
+    scan_interval: 60
+    payload: '{ "query": "{ viewer { homes { currentSubscription { priceInfo { today { total startsAt } tomorrow { total startsAt }}}}}}" }'
+    json_attributes_path: "$.data.viewer.homes[0].currentSubscription.priceInfo"
+    json_attributes:
+      - today
+      - tomorrow
+    value_template: Ok
+    headers:
+      Authorization: "YOUR HEX HERE"
+      Content-Type: application/json
+      User-Agent: REST
+
+  - platform: template
+    sensors:
+      peak_el_pris:
+        unit_of_measurement: "Sek/kWh"
+        friendly_name: "Peak elpris"
+        value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'peak') }}"
+        unique_id: peak_el_pris
+
+      offpeak_el_pris:
+        unit_of_measurement: "Sek/kWh"
+        friendly_name: "Offpeak elpris"
+        value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'off_peak_1') }}"
+        unique_id: offpeak_el_pris
+
+      text_el_pris:
+        friendly_name: "Text elpris"
+        value_template: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
+################################################################################
+##  END
+################################################################################
