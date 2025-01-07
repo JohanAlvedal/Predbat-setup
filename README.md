@@ -36,7 +36,9 @@ I am not an expert in programming, energy management, or automation. This setup 
 
 ## **Acknowledgments**  
 Thanks to:  
+- **[davidusb-geek](https://github.com/davidusb-geek)** for EMHASS.  
 - **[springfall2008](https://github.com/springfall2008)** for creating Predbat.  
 - The **[Home Assistant Community](https://community.home-assistant.io/)** for their invaluable resources.  
-
----
+- **Tibber** for energy data and insights.  
+- **Solcast** for solar forecasting.  
+- The **Home Assistant Community** for their incredible support and resources.  ---
