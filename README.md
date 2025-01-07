@@ -1,7 +1,3 @@
-Here’s the revised version with all links corrected and verified:  
-
----
-
 # **Welcome to My EMHASS and Predbat Setup**  
 
 ## **Overview**  
@@ -43,5 +39,3 @@ Thanks to:
 - **[Solcast](https://solcast.com/)** for solar forecasting.  
 
 ---
-
-This version ensures all links are accurate and functional. Let me know if there’s anything else you’d like adjusted!
