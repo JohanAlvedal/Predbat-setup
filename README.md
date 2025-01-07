@@ -1,78 +1,43 @@
+Here’s a **shortened and updated version** of your README, with a **disclaimer** and directions to explore specific folders for more details:  
+
+---
+
 # **Welcome to My EMHASS and Predbat Setup**  
 
 ## **Overview**  
-This project is focused on optimizing energy consumption in my smart home by combining two powerful tools:  
-- **[EMHASS (Energy Management for Home Assistant)](https://github.com/davidusb-geek/emhass)**
+This project optimizes energy consumption in my smart home using two powerful tools:  
+- **[EMHASS (Energy Management for Home Assistant)](https://github.com/davidusb-geek/emhass)**  
 - **[Predbat (Home Battery Prediction)](https://github.com/arti5020/predbat)**  
 
-By integrating these tools with Home Assistant, I’ve created a system that reduces energy costs and maximizes the efficiency of my 10kW home battery.  
+These tools integrate with Home Assistant to reduce energy costs and maximize the efficiency of my 10kW home battery.  
 
 ---
 
-## **Components of My Setup**  
-
-### 1. **Home Assistant**  
-Home Assistant is the core platform, managing all automations and integrations in my smart home.  
-
-### 2. **[Nordpool Integration](https://github.com/custom-components/nordpool)**  
-I use the Nordpool integration to fetch real-time electricity prices, a key component for both energy optimization and battery management.  
-
-### 3. **Huawei Inverter and 10kW Battery**  
-A Huawei inverter and a 10kW battery form the foundation of my energy system, allowing solar energy storage and optimized usage during peak price periods.  
+## **Setup Components**  
+1. **Home Assistant**: The core platform managing all automations and integrations.  
+2. **[Nordpool Integration](https://github.com/custom-components/nordpool)**: Fetches real-time electricity prices for cost optimization.  
+3. **Huawei Inverter and 10kW Battery**: Stores solar energy and powers the home during peak price periods.  
+4. **[Tibber Integration](https://www.home-assistant.io/integrations/tibber/)**: Provides additional electricity price insights.  
+5. **[Solcast Integration](https://github.com/dannerph/home_assistant_solcast_solar)**: Forecasts solar production for improved scheduling.  
 
 ---
 
-## **What is EMHASS?**  
-**EMHASS (Energy Management for Home Assistant)** is an open-source tool that provides intelligent recommendations for energy optimization.  
-- **Key Features**:  
-  - Optimizes energy usage based on electricity prices, solar production, and household consumption.  
-  - Creates schedules to run appliances at the most cost-efficient times.  
-
-- **GitHub Repository**: [EMHASS Repository](https://github.com/davidusb-geek/emhass)  
+## **Explore More**  
+Detailed setup instructions, configurations, and examples for each component are available in their respective folders:  
+- [**EMHASS Setup**](./emhass)  
+- [**Predbat Setup**](./predbat)  
 
 ---
 
-## **What is Predbat?**  
-**Predbat (Home Battery Prediction)** is a machine-learning-based tool that predicts and automates battery charging and discharging.  
-- **Key Features**:  
-  - Predicts battery usage based on electricity prices, solar production, and energy demand.  
-  - Automates battery charging during low-price periods and prioritizes discharging during high-price periods.  
-
-- **GitHub Repository**: [Predbat Repository](https://github.com/arti5020/predbat)  
+## **Disclaimer**  
+I am not an expert in programming, energy management, or automation. This setup is based on personal experience and experimentation. Use the code at your own risk—I do not take responsibility for issues or damages caused by implementing this setup. Test thoroughly before applying changes to your environment.  
 
 ---
 
-## **Current Status**  
-This project is a **work in progress**, and I’m continuously improving the setup. Current priorities include:  
-1. **Refining Predbat Configuration**:  
-   - Improving stability by fine-tuning automations and reducing the number of manual scripts.  
-2. **Integrating EMHASS**:  
-   - Testing EMHASS schedules to automate household appliance usage effectively.  
-
----
-
-## **Next Steps**  
-- **Implement Dynamic Controls**: Enable automation based on EMHASS recommendations.  
-- **Enhance Solar Production Integration**: Explore additional tools to maximize solar energy usage.  
-- **Share Insights**: Document my progress and challenges to help others replicate or improve upon my setup.  
-
----
-
-## **Tips for Others**  
-- Don’t hesitate to experiment—trial and error is part of the process!  
-- Utilize forums and GitHub repositories for support and ideas.  
-- Be patient—it takes time to get all components working smoothly together.  
-
----
-
-### **Acknowledgments**  
-- **[EMHASS by davidusb-geek](https://github.com/davidusb-geek/emhass)**  
+## **Acknowledgments**  
+Special thanks to:  
+- **[EMHASS by davidusb-geek](https://github.com/davidusb-geek)**  
 - **[Predbat by arti5020](https://github.com/arti5020/predbat)**  
+- The **Home Assistant Community** for their support and resources.  
 
 ---
-
-This README is written for sharing my setup, but I’m open to suggestions and feedback. Feel free to reach out or contribute 😊  
-
----
-
-This version is tailored for a GitHub repository and uses markdown syntax for easy readability. Let me know if you need help with further customization!
