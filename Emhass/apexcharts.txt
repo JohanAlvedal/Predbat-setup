@@ -1,0 +1,363 @@
+type: custom:apexcharts-card
+span:
+  start: minute
+header:
+  show: true
+  title: EMHASS Forecasts
+  show_states: true
+  colorize_states: true
+now:
+  show: true
+  label: now
+series:
+  - entity: sensor.p_pv_forecast
+    curve: stepline
+    show:
+      in_header: before_now
+    stroke_width: 1
+    data_generator: |
+      return entity.attributes.forecasts.map((entry) => {
+        return [new Date(entry.date), entry.p_pv_forecast];
+      });
+  - entity: sensor.p_batt_forecast
+    curve: stepline
+    show:
+      in_header: before_now
+    stroke_width: 1
+    data_generator: |
+      return entity.attributes.battery_scheduled_power.map((entry) => {
+        return [new Date(entry.date), entry.p_batt_forecast];
+      });
+  - entity: sensor.p_load_forecast
+    curve: stepline
+    show:
+      in_header: before_now
+    stroke_width: 1
+    data_generator: |
+      return entity.attributes.forecasts.map((entry) => {
+        return [new Date(entry.date), entry.p_load_forecast];
+      });
+  - entity: sensor.p_deferrable0
+    curve: stepline
+    stroke_width: 1
+    show:
+      in_header: before_now
+    data_generator: |
+      return entity.attributes.deferrables_schedule.map((entry) => {
+        return [new Date(entry.date), entry.p_deferrable0];
+      });
+##########################################
+##########################################
+
+type: custom:apexcharts-card
+experimental:
+  color_threshold: true
+graph_span: 24h
+span:
+  start: minute
+now:
+  show: true
+  label: now
+header:
+  show: true
+  title: Tibber Electricty Forecast
+  show_states: true
+  colorize_states: true
+series:
+  - entity: sensor.nordpool_tibber
+    float_precision: 2
+    show:
+      in_header: after_now
+    color_threshold:
+      - value: 0
+        color: cyan
+      - value: 0.16
+        color: green
+      - value: 0.2
+        color: yellow
+      - value: 0.3
+        color: red
+    name: price kwh
+    data_generator: >
+      const todayData = entity.attributes.raw_today.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      });
+
+      const tomorrowData = entity.attributes.raw_tomorrow ?
+      entity.attributes.raw_tomorrow.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      }) : [];
+
+      return todayData.concat(tomorrowData);
+yaxis:
+  - decimals: 2
+    apex_config:
+      forceNiceScale: true
+      min: undefined
+      max: undefined
+
+#########################################################################
+
+type: custom:apexcharts-card
+experimental:
+  color_threshold: true
+span:
+  start: minute
+header:
+  show: true
+  title: Battery, Price & Cost Forecast
+  show_states: true
+  colorize_states: true
+series:
+  - entity: sensor.nordpool_tibber
+    float_precision: 2
+    yaxis_id: first
+    show:
+      in_header: after_now
+      legend_value: false
+    stroke_width: 1
+    color: red
+    color_threshold:
+      - value: 0
+        color: cyan
+      - value: 0.19
+        color: green
+      - value: 0.3
+        color: yellow
+      - value: 0.4
+        color: red
+    name: general cost
+    data_generator: |
+      return entity.attributes.raw_today.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      });
+  - entity: sensor.nordpool_kwh_se3_sek_3_10_025
+    name: feedin min
+    float_precision: 2
+    yaxis_id: first
+    show:
+      in_header: after_now
+      legend_value: false
+    color: cyan
+    stroke_width: 1
+    data_generator: |
+      return entity.attributes.raw_today.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      });
+  - entity: sensor.nordpool_tibber
+    float_precision: 2
+    yaxis_id: first
+    show:
+      in_header: after_now
+      legend_value: false
+    color: blue
+    stroke_width: 1
+    name: feed in price
+    data_generator: |
+      return entity.attributes.raw_today.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      });
+  - entity: sensor.soc_batt_forecast
+    float_precision: 2
+    yaxis_id: second
+    show:
+      in_header: before_now
+      legend_value: false
+    color: green
+    stroke_width: 2
+    name: battery SOC
+    data_generator: |
+      const data = entity.attributes.battery_scheduled_soc || [];
+      return data.map((entry) => { 
+        return [new Date(entry.date), parseFloat(entry.soc_batt_forecast)];
+      });
+yaxis:
+  - id: first
+    decimals: 1
+    apex_config:
+      forceNiceScale: true
+  - id: second
+    decimals: 1
+    apex_config:
+      forceNiceScale: true
+view_layout:
+  position: main
+
+####################################################################
+
+type: custom:apexcharts-card
+span:
+  start: minute
+header:
+  show: true
+  title: Optimizer
+  show_states: true
+  colorize_states: true
+now:
+  show: true
+  label: now
+yaxis:
+  - id: power
+    decimals: 0
+    max: 8000
+  - id: price
+    decimals: 3
+    opposite: true
+series:
+  - entity: sensor.p_pv_forecast
+    yaxis_id: power
+    curve: stepline
+    show:
+      in_header: before_now
+      legend_value: false
+    stroke_width: 1
+    data_generator: |
+      return entity.attributes.forecasts.map((entry) => {
+        return [new Date(entry.date), entry.p_pv_forecast];
+      });
+  - entity: sensor.p_load_forecast
+    yaxis_id: power
+    curve: stepline
+    show:
+      in_header: before_now
+      legend_value: false
+    stroke_width: 1
+    data_generator: |
+      return entity.attributes.forecasts.map((entry) => {
+        return [new Date(entry.date), entry.p_load_forecast];
+      });
+  - entity: sensor.p_deferrable0
+    name: EV
+    yaxis_id: power
+    type: area
+    stroke_width: 2
+    show:
+      in_header: before_now
+      legend_value: false
+    data_generator: |
+      return entity.attributes.deferrables_schedule.map((entry) => {
+        return [new Date(entry.date), entry.p_deferrable0];
+      });
+  - entity: sensor.nordpool_tibber
+    name: Elpris
+    curve: stepline
+    stroke_width: 1
+    data_generator: |
+      const todayData = entity.attributes.raw_today.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      });
+
+      const tomorrowData = entity.attributes.raw_tomorrow ?
+      entity.attributes.raw_tomorrow.map((entry) => {
+        return [new Date(entry.start), entry.value];
+      }) : [];
+
+      return todayData.concat(tomorrowData);
+    show:
+      legend_value: false
+      in_header: before_now
+    yaxis_id: price
+    float_precision: 3
+
+#############################################################################
+
+type: custom:apexcharts-card
+span:
+  start: minute
+header:
+  show: true
+  title: EMHASS Daily Forecast
+  show_states: true
+  colorize_states: true
+now:
+  show: true
+  label: now
+yaxis:
+  - id: fixed
+    min: -6500
+    max: 8000
+    decimals: 2
+    apex_config:
+      forceNiceScale: true
+      tickAmount: 4
+series:
+  - entity: sensor.p_pv_forecast
+    curve: stepline
+    stroke_width: 2
+    color: orange
+    show:
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const data = entity.attributes.forecasts || [];
+      return data.map((entry) => {
+        return [new Date(entry.date), entry.p_pv_forecast];
+      });
+  - entity: sensor.p_load_forecast
+    curve: stepline
+    type: line
+    color: purple
+    show:
+      in_header: false
+      legend_value: false
+    stroke_width: 1
+    data_generator: |
+      const data = entity.attributes.forecasts || [];
+      return data.map((entry) => {
+        return [new Date(entry.date), entry.p_load_forecast];
+      });
+  - entity: sensor.p_batt_forecast
+    curve: stepline
+    color: blue
+    type: area
+    stroke_width: 1
+    show:
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const data = entity.attributes.battery_scheduled_power || [];
+      return data.map((entry) => {
+        return [new Date(entry.date), entry.p_batt_forecast];
+      });
+  - entity: sensor.p_grid_forecast
+    curve: stepline
+    color: teal
+    type: area
+    stroke_width: 1
+    show:
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const data = entity.attributes.forecasts || [];
+      return data.map((entry) => {
+        return [new Date(entry.date), entry.p_grid_forecast];
+      });
+  - entity: sensor.p_deferrable0
+    curve: stepline
+    name: EV
+    stroke_width: 1
+    show:
+      in_header: false
+      legend_value: false
+    data_generator: |
+      const data = entity.attributes.deferrables_schedule || [];
+      return data.map((entry) => {
+        return [new Date(entry.date), entry.p_deferrable0];
+      });
+  - entity: sensor.total_cost_fun_value
+    unit: $
+    name: Plan Value (+ve credit)
+    show:
+      legend_value: false
+      in_chart: false
+  - entity: sensor.solcast_pv_forecast_forecast_today
+    unit: kWh
+    name: Solar Production Forecast
+    show:
+      legend_value: false
+      in_chart: false
+view_layout:
+  position: main
+
+########################################################################
+
