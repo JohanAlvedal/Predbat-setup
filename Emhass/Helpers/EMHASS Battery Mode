@@ -1,0 +1,21 @@
+{% set p_batt = states('sensor.p_batt_forecast') %}
+{% set p_grid = states('sensor.p_grid_forecast') %}
+
+{% if p_batt == 'unavailable' or p_grid == 'unavailable' %}
+  Unknown
+{% else %}
+  {% set p_batt = p_batt | float(0) %}
+  {% set p_grid = p_grid | float(0) %}
+  
+  {% if p_batt == 0 %}
+    Do Nothing
+  {% elif p_grid == 0 %}
+    Follow Grid
+  {% elif p_batt < 0 %}
+    Forcible Charge
+  {% elif p_batt > 0 %}
+    Forcible Discharge
+  {% else %}
+    Unknown
+  {% endif %}
+{% endif %}
