@@ -1,5 +1,3 @@
-Thank you for the clarification! Here's the updated **Predbat README** reflecting the correct author:  
-
 ---
 
 # **Predbat Setup in Home Assistant**  
