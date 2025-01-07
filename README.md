@@ -41,4 +41,3 @@ Thanks to:
 - The **[Home Assistant Community](https://community.home-assistant.io/)** for their invaluable resources.  
 - **Tibber** for energy data and insights.  
 - **Solcast** for solar forecasting.  
-- The **Home Assistant Community** for their incredible support and resources.  ---
