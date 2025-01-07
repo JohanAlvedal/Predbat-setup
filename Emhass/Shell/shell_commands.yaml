@@ -2,7 +2,7 @@
 ####                        START                                           ####
 ################################################################################
 ## temperatur.nu
-temperatur_nu: "/usr/bin/curl http://www.temperatur.nu/rapportera.php?hash=XXXXXXXXXXXXXXXXXXXXX={{ states('sensor.temperatur_nu') }}"
+temperatur_nu: "/usr/bin/curl http://www.temperatur.nu/rapportera.php?hash=XXXXXXXXXXXXXXXXX={{ states('sensor.temperatur_nu') }}"
 
 # EMHASS
 publish_data: 'curl -i -H "Content-Type:application/json" -X POST -d ''{}'' http://localhost:5000/action/publish-data'
