@@ -1,0 +1,110 @@
+alias: EMHASS POWER Control V2
+description: ""
+triggers:
+  - minutes: /5
+    id: X-Min
+    enabled: true
+    trigger: time_pattern
+  - entity_id:
+      - sensor.p_batt_forecast
+      - sensor.emhass_battery_mode
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    trigger: state
+conditions:
+  - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "on"
+    enabled: false
+actions:
+  - choose:
+      - conditions:
+          - condition: and
+            conditions:
+              - condition: state
+                entity_id: sensor.p_batt_forecast
+                state: "0.00"
+              - condition: state
+                entity_id: sensor.soc_comparison
+                state: same
+              - condition: state
+                entity_id: sensor.emhass_battery_mode
+                state: Do Nothing
+        sequence:
+          - action: script.huawei_charging_power_0w
+            data: {}
+          - action: script.huawei_discharging_power_0w
+            data: {}
+        alias: EMHASS (STOP) power
+      - conditions:
+          - condition: and
+            conditions:
+              - condition: numeric_state
+                entity_id: sensor.p_batt_forecast
+                above: 50
+                enabled: true
+              - condition: state
+                entity_id: sensor.emhass_battery_mode
+                state: Forcible Discharge
+        sequence:
+          - action: script.huawei_limited_power_forecast
+            data: {}
+            enabled: true
+          - action: script.huawei_p_batt_forecast
+            data: {}
+            enabled: false
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+          - action: script.huawei_charging_power_0w
+            data: {}
+        alias: EMHASS (Discharge) Power
+      - conditions:
+          - condition: and
+            conditions:
+              - condition: numeric_state
+                entity_id: sensor.p_batt_forecast
+                enabled: true
+                below: 50
+              - condition: state
+                entity_id: sensor.emhass_battery_mode
+                state: Forcible Charge
+        sequence:
+          - if:
+              - condition: numeric_state
+                entity_id: sensor.p_deferrable0
+                above: 50
+            then:
+              - action: script.emhass_charging_power_2500
+                data: {}
+            else:
+              - action: script.huawei_limited_power_charge
+                data: {}
+                enabled: true
+              - action: script.huawei_p_batt_forecast
+                data: {}
+                enabled: false
+        alias: EMHASS (Charge) Power
+      - conditions:
+          - condition: state
+            entity_id: sensor.emhass_battery_mode
+            state: Follow Grid
+        sequence:
+          - if:
+              - condition: numeric_state
+                entity_id: sensor.inverter_input_power
+                above: 1500
+            then:
+              - action: script.huawei_charging_power_5000w
+                data: {}
+            else:
+              - action: script.huawei_charging_power_0w
+                data: {}
+          - action: script.huawei_p_batt_forecast
+            data: {}
+        alias: EMHASS (Discharge) Power Follow grid
+mode: parallel
+max: 10
