@@ -1,82 +1,61 @@
-alias: EMHASS SOC Control
+alias: EMHASS SOC Control V2
 description: ""
 triggers:
-  - minutes: /2
-    id: X-Min
+  - minutes: /4
     enabled: true
     trigger: time_pattern
-  - entity_id:
+  - trigger: state
+    entity_id:
+      - sensor.emhass_battery_mode
       - sensor.p_batt_forecast
-    to: "0"
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 5
-    id: 0W
-    trigger: state
-  - entity_id: sensor.soc_comparison
-    to: same
-    for:
-      seconds: 5
-    id: same
-    enabled: true
-    trigger: state
-  - entity_id:
-      - sensor.limited_power
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
-    id: limited_power
-    trigger: state
-  - entity_id: sensor.soc_batt_forecast
-    id: Battery SOC Forecast changes
-    trigger: state
-  - entity_id: sensor.p_batt_forecast
-    id: Battery Power Forecast changes
-    trigger: state
-conditions: []
+      - sensor.soc_batt_forecast
+conditions:
+  - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "on"
+    enabled: false
 actions:
   - choose:
       - conditions:
-          - condition: trigger
-            id:
-              - Battery SOC Forecast changes
-              - Battery Power Forecast changes
-              - X-Min
           - condition: numeric_state
             entity_id: sensor.p_batt_forecast
             below: -50
           - condition: state
-            entity_id: sensor.p_batt_forecast
-            state: Charging
+            entity_id: sensor.emhass_battery_mode
+            state: Forcible Charge
         sequence:
-          - alias: 05:00-23:00
+          - alias: 06:00-23:00
             if:
               - condition: time
-                after: "05:00:00"
+                after: "06:00:00"
                 before: "23:00:00"
             then:
-              - action: huawei_solar.forcible_charge_soc
-                data:
-                  target_soc: >-
-                    {% set value = states('sensor.soc_batt_forecast') | int(0)
-                    %} {{ value if value >= 12 else 12 }}
-                  power: >-
-                    {{ (states('sensor.p_batt_forecast') | int(0) | abs ) | int
-                    }}
-                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-              - action: script.huawei_discharging_power_0w
-                data: {}
-          - alias: 23:00-05:00
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.p_deferrable0
+                    above: 100
+                    enabled: true
+                then:
+                  - action: huawei_solar.forcible_charge_soc
+                    data:
+                      target_soc: >-
+                        {% set value = states('sensor.soc_batt_forecast') |
+                        int(0) %} {{ value if value >= 12 else 12 }}
+                      power: "5000"
+                      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                else:
+                  - action: huawei_solar.forcible_charge_soc
+                    data:
+                      target_soc: >-
+                        {% set value = states('sensor.soc_batt_forecast') |
+                        int(0) %} {{ value if value >= 12 else 12 }}
+                      power: "5000"
+                      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - alias: 23:00-06:00
             if:
               - condition: time
                 after: "23:00:00"
-                before: "05:00:00"
-              - condition: numeric_state
-                entity_id: sensor.p_deferrable0
-                above: 100
-                enabled: true
+                before: "06:00:00"
             then:
               - if:
                   - condition: numeric_state
@@ -89,37 +68,24 @@ actions:
                       target_soc: >-
                         {% set value = states('sensor.p_batt_forecast') | int(0)
                         %} {{ value if value >= 12 else 12 }}
-                      power: "{{ (states('sensor.p_batt_forecast') | int(0) | abs)}}"
+                      power: "5000"
                       device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
                 else:
                   - action: huawei_solar.forcible_charge_soc
                     data:
                       target_soc: >-
-                        {% set value = states('sensor.soc_batt_forecast') |
-                        int(0) %} {{ value if value >= 12 else 12 }}
-                      power: 5000
+                        {% set value = states('sensor.p_batt_forecast') | int(0)
+                        %} {{ value if value >= 12 else 12 }}
+                      power: "5000"
                       device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-                  - delay:
-                      hours: 0
-                      minutes: 0
-                      seconds: 5
-                      milliseconds: 0
-                  - action: script.huawei_limited_power_charge
-                    data: {}
-              - action: script.huawei_discharging_power_0w
-                data: {}
-        alias: EMHASS (Charge)
+        alias: EMHASS (Charge) FC
       - conditions:
-          - condition: trigger
-            id:
-              - Battery SOC Forecast changes
-              - X-Min
           - condition: numeric_state
             entity_id: sensor.p_batt_forecast
             above: 50
           - condition: state
-            entity_id: sensor.p_batt_forecast
-            state: Discharging
+            entity_id: sensor.emhass_battery_mode
+            state: Forcible Discharge
         sequence:
           - if:
               - condition: numeric_state
@@ -128,9 +94,7 @@ actions:
             then:
               - data:
                   duration: 60
-                  power: >-
-                    {{ (states('sensor.p_batt_forecast') | int(0) | abs / 0.95)
-                    | int }}
+                  power: "5000"
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
                 action: huawei_solar.forcible_discharge
             else:
@@ -138,71 +102,33 @@ actions:
                   target_soc: >-
                     {% set value = states('sensor.soc_batt_forecast') | int(0)
                     %} {{ value if value >= 12 else 12 }}
-                  power: >-
-                    {{ (states('sensor.p_batt_forecast') | int(0) | abs / 0.95)
-                    | int }}
+                  power: "5000"
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
                 action: huawei_solar.forcible_discharge_soc
         alias: EMHASS (Discharge) FDC
       - conditions:
-          - condition: trigger
-            id:
-              - limited_power
-              - Battery Power Forecast changes
-              - X-Min
-            enabled: true
-          - condition: numeric_state
-            entity_id: sensor.p_batt_forecast
-            above: 50
-            enabled: true
-          - condition: state
-            entity_id: sensor.p_batt_forecast
-            state: Discharging
-            enabled: true
-        sequence:
-          - action: script.huawei_p_batt_forecast
-            data: {}
-          - action: script.huawei_limited_power_forecast
-            data: {}
-        alias: EMHASS (Discharge) Power
-      - conditions:
-          - condition: trigger
-            id:
-              - 0W
-              - X-Min
-          - condition: state
-            entity_id: sensor.soc_comparison
-            state: same
-          - condition: state
-            entity_id: sensor.p_batt_forecast
-            state: "0.00"
-          - condition: not
+          - condition: and
             conditions:
               - condition: state
-                entity_id: sensor.batteries_forcible_charge
-                state: Stopped
+                entity_id: sensor.soc_comparison
+                state: same
+              - condition: state
+                entity_id: sensor.p_batt_forecast
+                state: "0.00"
+              - condition: state
+                entity_id: sensor.emhass_battery_mode
+                state: Do Nothing
         sequence:
-          - data:
-              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-            action: huawei_solar.stop_forcible_charge
+          - if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.batteries_forcible_charge
+                    state: Stopped
+            then:
+              - data:
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                action: huawei_solar.stop_forcible_charge
         alias: EMHASS (STOP) FDC FC
-      - conditions:
-          - condition: trigger
-            id:
-              - 0W
-              - same
-              - X-Min
-          - condition: state
-            entity_id: sensor.soc_comparison
-            state: same
-          - condition: state
-            entity_id: sensor.p_batt_forecast
-            state: "0.00"
-        sequence:
-          - action: script.huawei_charging_power_0w
-            data: {}
-          - action: script.huawei_discharging_power_0w
-            data: {}
-        alias: EMHASS (STOP) power
-mode: queued
+mode: parallel
 max: 10
