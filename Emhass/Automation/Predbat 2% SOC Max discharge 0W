@@ -1,0 +1,19 @@
+alias: Predbat 2% SOC Max discharge 0W
+description: ""
+triggers:
+  - trigger: numeric_state
+    entity_id:
+      - sensor.battery_state_of_capacity
+    below: 5
+conditions:
+  - condition: state
+    entity_id: automation.emhass_soc_control_v2
+    state: "off"
+actions:
+  - action: number.set_value
+    metadata: {}
+    data:
+      value: "0"
+    target:
+      entity_id: number.battery_maximum_discharging_power
+mode: single
