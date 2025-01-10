@@ -91,14 +91,14 @@ actions:
               minutes: 0
               seconds: 5
               milliseconds: 0
-          - action: script.emhass_charging_power_2500
+          - action: script.huawei_charging_power_4500w
             data: {}
           - delay:
               hours: 0
               minutes: 0
               seconds: 5
               milliseconds: 0
-          - action: script.huawei_discharging_power_2500w
+          - action: script.huawei_discharging_power_0w
             data: {}
       - conditions:
           - condition: trigger
@@ -178,25 +178,33 @@ actions:
                   seconds: 5
                   milliseconds: 0
               - if:
-                  - condition: or
-                    conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.battery_state_of_capacity
-                        below: 5
-                      - condition: template
-                        value_template: >
-                          {{ (states('sensor.inverter_input_power') | float) <
-                          (states('sensor.grid_to_house') | float) - 500 }}
-                        enabled: true
+                  - condition: numeric_state
+                    entity_id: sensor.battery_state_of_capacity
+                    below: 5
                 then:
                   - action: script.huawei_discharging_power_0w
                     data: {}
                 else:
-                  - action: script.huawei_discharging_power_5000
-                    data: {}
-                enabled: false
-              - action: script.huawei_discharging_power_4500w
-                data: {}
+                  - if:
+                      - condition: or
+                        conditions:
+                          - condition: numeric_state
+                            entity_id: sensor.tvattmaskin_energy_power
+                            above: 30
+                          - condition: numeric_state
+                            entity_id: sensor.torktumlare_energy_power
+                            above: 20
+                          - condition: numeric_state
+                            entity_id: sensor.nous_1_energy_power
+                            above: 50
+                    then:
+                      - action: script.huawei_discharging_power_5200w
+                        data: {}
+                    else:
+                      - action: script.huawei_discharging_power_4500w
+                        data: {}
+                        enabled: true
+                enabled: true
               - delay:
                   hours: 0
                   minutes: 0
@@ -205,5 +213,6 @@ actions:
                 enabled: true
               - action: script.huawei_charging_power_4500w
                 data: {}
+                enabled: true
 mode: parallel
 max: 10
