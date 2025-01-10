@@ -23,6 +23,9 @@ conditions:
       - condition: state
         entity_id: binary_sensor.predbat_charging
         state: "off"
+  - condition: state
+    entity_id: automation.emhass_soc_control_v2
+    state: "off"
 actions:
   - if:
       - condition: numeric_state
