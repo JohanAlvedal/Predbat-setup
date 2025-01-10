@@ -21,6 +21,7 @@ actions:
         id:
           - Predbat_charging_on
           - state
+        enabled: true
       - condition: and
         conditions:
           - condition: numeric_state
@@ -74,19 +75,24 @@ actions:
       - action: script.huawei_discharging_power_0w
         data: {}
     enabled: true
+    else:
+      - action: script.huawei_discharging_power_0w
+        data: {}
   - alias: 23:30-06:00
     if:
       - condition: time
         after: "23:30:00"
         before: "06:00:00"
-      - condition: numeric_state
-        entity_id: sensor.battery_state_of_capacity
-        above: 0
-        below: 96
-      - condition: trigger
-        id:
-          - Predbat_charging_on
-          - state
+      - condition: and
+        conditions:
+          - condition: numeric_state
+            entity_id: sensor.battery_state_of_capacity
+            above: 0
+            below: 96
+          - condition: trigger
+            id:
+              - Predbat_charging_on
+              - state
     then:
       - if:
           - condition: state
