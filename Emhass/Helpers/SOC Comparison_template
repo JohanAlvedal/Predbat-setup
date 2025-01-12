@@ -1,7 +1,7 @@
 {% set forecast = states('sensor.soc_batt_forecast') | float(0) %}
 {% set capacity = states('sensor.battery_state_of_capacity') | float(0) %}
           {% if forecast == capacity %}
-            same
+            Same
           {% else %}
-            differs
+            Differs
           {% endif %}
