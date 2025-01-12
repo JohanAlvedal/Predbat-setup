@@ -1,23 +1,22 @@
 alias: EMHASS POWER Control V2
 description: ""
 triggers:
-  - minutes: /5
+  - minutes: /2
     id: X-Min
     enabled: true
     trigger: time_pattern
   - entity_id:
-      - sensor.p_batt_forecast
       - sensor.emhass_battery_mode
     for:
       hours: 0
       minutes: 0
       seconds: 0
     trigger: state
-conditions:
-  - condition: state
-    entity_id: switch.predbat_set_read_only
-    state: "on"
-    enabled: false
+  - trigger: state
+    entity_id:
+      - sensor.p_batt_forecast
+    attribute: battery_scheduled_power
+conditions: []
 actions:
   - choose:
       - conditions:
@@ -28,15 +27,20 @@ actions:
                 state: "0.00"
               - condition: state
                 entity_id: sensor.soc_comparison
-                state: same
+                state: Same
               - condition: state
                 entity_id: sensor.emhass_battery_mode
                 state: Do Nothing
         sequence:
-          - action: script.huawei_charging_power_0w
-            data: {}
           - action: script.huawei_discharging_power_0w
             data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+          - action: script.huawei_charging_power_0w
+            data: {}
+            enabled: true
         alias: EMHASS (STOP) power
       - conditions:
           - condition: and
@@ -51,16 +55,10 @@ actions:
         sequence:
           - action: script.huawei_limited_power_forecast
             data: {}
-            enabled: true
+            enabled: false
           - action: script.huawei_p_batt_forecast
             data: {}
-            enabled: false
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-          - action: script.huawei_charging_power_0w
-            data: {}
+            enabled: true
         alias: EMHASS (Discharge) Power
       - conditions:
           - condition: and
@@ -80,13 +78,133 @@ actions:
             then:
               - action: script.emhass_charging_power_2500
                 data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+              - action: script.huawei_discharging_power_0w
+                data: {}
+            else:
+              - if:
+                  - condition: time
+                    after: "06:00:00"
+                    before: "23:30:00"
+                then:
+                  - action: script.huawei_p_batt_charge_forecast
+                    data: {}
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 5
+                  - action: script.huawei_discharging_power_0w
+                    data: {}
+                else:
+                  - action: script.huawei_limited_power_charge
+                    data: {}
+                    enabled: true
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 5
+                  - action: script.huawei_discharging_power_0w
+                    data: {}
+            enabled: false
+          - if:
+              - condition: time
+                after: "23:30:00"
+                before: "06:00:00"
+            then:
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.p_deferrable0
+                    above: 50
+                then:
+                  - action: script.emhass_charging_power_2500
+                    data: {}
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 5
+                  - action: script.huawei_discharging_power_0w
+                    data: {}
+                else:
+                  - if:
+                      - condition: time
+                        after: "06:00:00"
+                        before: "23:30:00"
+                    then:
+                      - action: script.huawei_p_batt_charge_forecast
+                        data: {}
+                      - delay:
+                          hours: 0
+                          minutes: 0
+                          seconds: 5
+                      - action: script.huawei_discharging_power_0w
+                        data: {}
+                    else:
+                      - action: script.huawei_limited_power_charge
+                        data: {}
+                        enabled: true
+                      - delay:
+                          hours: 0
+                          minutes: 0
+                          seconds: 5
+                      - action: script.huawei_discharging_power_0w
+                        data: {}
+                enabled: false
+            else:
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.p_deferrable0
+                    above: 50
+                then:
+                  - action: script.emhass_charging_power_2500
+                    data: {}
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 5
+                  - action: script.huawei_discharging_power_0w
+                    data: {}
+            enabled: false
+          - alias: 06:00-23:30
+            if:
+              - condition: time
+                after: "06:00:00"
+                before: "23:30:00"
+            then:
+              - action: script.huawei_charge_limited_power_max_3500w
+                data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+              - action: script.huawei_discharging_power_0w
+                data: {}
             else:
               - action: script.huawei_limited_power_charge
                 data: {}
                 enabled: true
-              - action: script.huawei_p_batt_forecast
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+              - action: script.huawei_discharging_power_0w
                 data: {}
-                enabled: false
+          - alias: 23:30-06:00
+            if:
+              - condition: time
+                after: "23:30:00"
+                before: "06:00:00"
+            then:
+              - action: script.huawei_p_batt_charge_forecast
+                data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+              - action: script.huawei_discharging_power_0w
+                data: {}
         alias: EMHASS (Charge) Power
       - conditions:
           - condition: state
@@ -103,7 +221,16 @@ actions:
             else:
               - action: script.huawei_charging_power_0w
                 data: {}
+              - action: script.huawei_charging_power_0w
+                data: {}
+            enabled: false
           - action: script.huawei_p_batt_forecast
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+          - action: script.huawei_charging_power_5000w
             data: {}
         alias: EMHASS (Discharge) Power Follow grid
 mode: parallel
