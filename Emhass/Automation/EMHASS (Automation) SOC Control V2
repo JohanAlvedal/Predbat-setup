@@ -2,7 +2,7 @@ alias: EMHASS SOC Control V2
 description: ""
 triggers:
   - minutes: /1
-    enabled: true
+    enabled: false
     trigger: time_pattern
   - trigger: state
     entity_id:
@@ -49,9 +49,15 @@ actions:
               - condition: numeric_state
                 entity_id: sensor.soc_batt_forecast
                 above: sensor.battery_state_of_capacity
+                enabled: true
               - condition: state
                 entity_id: sensor.emhass_battery_mode
                 state: Forcible Charge
+          - condition: numeric_state
+            entity_id: sensor.battery_state_of_capacity
+            above: 0
+            below: 97
+            enabled: true
         sequence:
           - action: huawei_solar.forcible_charge_soc
             data:
