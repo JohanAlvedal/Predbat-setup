@@ -1,9 +1,6 @@
 alias: EMHASS SOC Control V2
 description: ""
 triggers:
-  - minutes: /1
-    enabled: false
-    trigger: time_pattern
   - trigger: state
     entity_id:
       - sensor.emhass_battery_mode
@@ -11,6 +8,8 @@ triggers:
     entity_id:
       - sensor.soc_batt_forecast
     attribute: battery_scheduled_soc
+  - trigger: time_pattern
+    minutes: /5
 conditions: []
 actions:
   - choose:
