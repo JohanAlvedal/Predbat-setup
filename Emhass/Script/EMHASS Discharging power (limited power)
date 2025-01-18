@@ -1,0 +1,13 @@
+sequence:
+  - condition: template
+    value_template: |
+      {{ states('number.battery_maximum_discharging_power') | int(0) != 
+        (states('sensor.limited_power') | int(0) | abs ) | int }}
+  - target:
+      entity_id: number.battery_maximum_discharging_power
+    data:
+      value: "{{ (states('sensor.limited_power') | int(0) | abs ) | int }}"
+    action: number.set_value
+alias: Huawei limited power discharge
+description: Set the Batteries Maximum discharging power dynamically
+icon: mdi:battery-charging-20
