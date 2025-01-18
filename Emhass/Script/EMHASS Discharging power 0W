@@ -1,0 +1,10 @@
+alias: EMHASS  Discharging power 0W
+sequence:
+  - condition: template
+    value_template: "{{ states('number.battery_maximum_discharging_power') | int(0) != 0 }}"
+  - data:
+      value: "0"
+    target:
+      entity_id: number.battery_maximum_discharging_power
+    action: number.set_value
+description: "Perform action 'Number: Set' on Batteries Maximum discharging power"
