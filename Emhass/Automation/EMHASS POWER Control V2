@@ -17,38 +17,12 @@ triggers:
       - sensor.battery_state_of_capacity
     attribute: battery_scheduled_soc
     to: "3"
-    id: 3%
+    id: "3"
   - trigger: time_pattern
     minutes: /2
 conditions: []
 actions:
   - choose:
-      - conditions:
-          - condition: or
-            conditions:
-              - condition: and
-                conditions:
-                  - condition: state
-                    entity_id: sensor.p_batt_forecast
-                    state: "0.00"
-                  - condition: state
-                    entity_id: sensor.emhass_battery_mode
-                    state: Do Nothing
-              - condition: trigger
-                id:
-                  - 3%
-        sequence:
-          - action: script.huawei_discharging_power_0w
-            data: {}
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-            enabled: true
-          - action: script.huawei_charging_power_0w
-            data: {}
-            enabled: true
-        alias: EMHASS (STOP) power
       - conditions:
           - condition: and
             conditions:
@@ -87,7 +61,7 @@ actions:
             entity_id: sensor.battery_state_of_capacity
             above: 0
             below: 97
-            enabled: true
+            enabled: false
         sequence:
           - alias: 06:00-22:30
             if:
@@ -107,10 +81,10 @@ actions:
                 else:
                   - action: script.huawei_p_batt_charge_forecast
                     data: {}
-                    enabled: true
+                    enabled: false
                   - action: script.huawei_limited_power_charge
                     data: {}
-                    enabled: false
+                    enabled: true
               - delay:
                   hours: 0
                   minutes: 0
@@ -131,15 +105,17 @@ actions:
                   - action: script.huawei_charge_limited_power_max3500w
                     metadata: {}
                     data: {}
+                    enabled: false
                   - action: script.emhass_charging_power_2500
                     data: {}
-                    enabled: false
+                    enabled: true
                 enabled: true
                 else:
+                  - action: script.huawei_charging_power_4500w
+                    data: {}
+                    enabled: true
                   - action: script.huawei_limited_power_charge
                     metadata: {}
-                    data: {}
-                  - action: script.huawei_charging_power_4500w
                     data: {}
                     enabled: false
                   - action: script.huawei_charging_power_5000w
@@ -152,6 +128,47 @@ actions:
               - action: script.huawei_discharging_power_0w
                 data: {}
         alias: EMHASS (Charge) Power
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: and
+                conditions:
+                  - condition: state
+                    entity_id: sensor.p_batt_forecast
+                    state: "0.00"
+                  - condition: state
+                    entity_id: sensor.emhass_battery_mode
+                    state: Do Nothing
+              - condition: trigger
+                id:
+                  - "3"
+              - condition: state
+                entity_id: sensor.limited_power
+                state: "0"
+        sequence:
+          - if:
+              - condition: numeric_state
+                entity_id: number.battery_maximum_charging_power
+                above: 0
+            then:
+              - action: script.huawei_discharging_power_0w
+                data: {}
+            alias: "Perform action 'Script: Huawei Discharging power 0W"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+            enabled: true
+          - alias: "Perform action 'Script: Huawei Charging power 0W"
+            if:
+              - condition: numeric_state
+                entity_id: number.battery_maximum_discharging_power
+                above: 0
+            then:
+              - action: script.huawei_charging_power_0w
+                data: {}
+                enabled: true
+        alias: EMHASS (STOP) power
       - conditions:
           - condition: state
             entity_id: sensor.emhass_battery_mode
