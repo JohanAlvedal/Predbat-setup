@@ -79,14 +79,42 @@ sensor:
         value_template: >
           {{ ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) | round(0, "ceil", 0) }}
 
-  # Check the Go-e charger if the car is connected, otherwise the number of hours is 0
+#   # Check the Go-e charger if the car is connected, otherwise the number of hours is 0
+#   - platform: template
+#     sensors:
+#       c40_additional_charge_hours_if_connected:
+#         unit_of_measurement: "h"
+#         device_class: duration
+#         value_template: >
+ 
+#          {{ (states('sensor.c40_additional_charge_hours') | int if states('binary_sensor.go_echarger_265216_car') in ("on", "ready_to_charge", "charging") else 0) }}
+
   - platform: template
     sensors:
       c40_additional_charge_hours_if_connected:
         unit_of_measurement: "h"
         device_class: duration
         value_template: >
-          {{ (states('sensor.c40_additional_charge_hours') | int if states('binary_sensor.go_echarger_265216_car') in ("on", "ready_to_charge", "charging") else 0) }}
+          {% set current_price = states('sensor.nordpool_tibber') | float(0) %}
+          {% set max_price = states('input_number.max_ore_value') | float(100) %}
+          {% set today_prices = state_attr('sensor.nordpool_tibber', 'today') | default([]) %}
+          {% set tomorrow_prices = state_attr('sensor.nordpool_tibber', 'tomorrow') | default([]) %}
+        
+          {# Kombinera dagens och morgondagens priser om morgondagens priser är giltiga #}
+          {% set all_prices = today_prices + (tomorrow_prices if state_attr('sensor.nordpool_tibber', 'tomorrow_valid') else []) %}
+        
+          {# Ta ut priserna för de kommande 10 timmarna #}
+          {% set next_10_hours = all_prices[now().hour:now().hour + 10] %}
+        
+          {# Kontrollera om det finns ett pris som är lägre än maxpriset inom de kommande 10 timmarna #}
+          {% set price_below_max = next_10_hours | select('lt', max_price) | list %}
+        
+          {# Om nuvarande pris är högre än maxpris och det inte finns några låga priser, returnera 0 #}
+          {% if current_price > max_price and price_below_max | length == 0 %}
+            0
+          {% else %}
+            {{ (states('sensor.c40_additional_charge_hours') | int if states('binary_sensor.go_echarger_265216_car') in ("on", "ready_to_charge", "charging") else 0) }}
+          {% endif %}
 
   # Calculate additional charge in watts
   - platform: template
