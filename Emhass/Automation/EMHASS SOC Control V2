@@ -9,7 +9,7 @@ triggers:
       - sensor.soc_batt_forecast
     attribute: battery_scheduled_soc
   - trigger: time_pattern
-    minutes: /5
+    minutes: /2
 conditions: []
 actions:
   - choose:
@@ -27,6 +27,7 @@ actions:
                   - condition: state
                     entity_id: sensor.emhass_battery_mode
                     state: Follow Grid
+                    enabled: true
         sequence:
           - if:
               - condition: not
@@ -38,7 +39,7 @@ actions:
               - data:
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
                 action: huawei_solar.stop_forcible_charge
-        alias: EMHASS (STOP) FDC FC
+        alias: EMHASS (STOP) FDC FC Follow grid
       - conditions:
           - condition: and
             conditions:
@@ -71,7 +72,7 @@ actions:
             conditions:
               - condition: numeric_state
                 entity_id: sensor.p_batt_forecast
-                above: 50
+                above: 10
               - condition: numeric_state
                 entity_id: sensor.battery_state_of_capacity
                 above: sensor.soc_batt_forecast
@@ -98,23 +99,5 @@ actions:
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
                 action: huawei_solar.forcible_discharge_soc
         alias: EMHASS (Discharge) FDC
-      - conditions:
-          - condition: state
-            entity_id: sensor.emhass_battery_mode
-            state: Follow Grid
-            enabled: false
-        sequence:
-          - if:
-              - condition: not
-                conditions:
-                  - condition: state
-                    entity_id: sensor.batteries_forcible_charge
-                    state: Stopped
-            then:
-              - data:
-                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-                action: huawei_solar.stop_forcible_charge
-            enabled: false
-        alias: EMHASS (STOP) FDC FC Follow grid
 mode: parallel
 max: 10
