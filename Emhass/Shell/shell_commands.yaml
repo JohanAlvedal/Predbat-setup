@@ -52,8 +52,8 @@ post_naive_mpc_org: >
     "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
     "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
     "P_deferrable_nom": [{% set value = states('sensor.go_echarger_265216_nrg_12')|int %}{{ value if value >= 5500 else 5500 }}],
-    "weight_battery_discharge": 0.6,
-    "weight_battery_charge": 0.35,
+    "weight_battery_discharge": 0.50,
+    "weight_battery_charge": 0.30,
     "alpha": 1,
     "beta": 0,
     "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
@@ -70,14 +70,50 @@ post_naive_mpc_v2: >
     "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
     "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
     "P_deferrable_nom": [{% set value = states('sensor.go_echarger_265216_nrg_12')|int %}{{ value if value >= 5500 else 5500 }}],
-    "weight_battery_discharge": 0.5,
-    "weight_battery_charge": 0.35,
+    "weight_battery_discharge": 0.45,
+    "weight_battery_charge": 0.25,
+    "alpha": 1,
+    "beta": 0,
+    "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
+    "def_end_timestep":[{{ states('sensor.hours_until_next_user_time') | default(0) }}]
+  }' http://localhost:5000/action/naive-mpc-optim
+
+post_naive_mpc_v3: >
+  curl -i -H "Content-Type: application/json" -X POST -d '{
+    "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prod_price_forecast":{{((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
+    "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
+    "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
+    "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
+    "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
+    "P_deferrable_nom": [{% set value = states('sensor.go_echarger_265216_nrg_12')|int %}{{ value if value >= 5500 else 5500 }}],
+    "weight_battery_discharge": 0.40,
+    "weight_battery_charge": 0.20,
     "alpha": 1,
     "beta": 0,
     "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
     "def_end_timestep":[{{ states('sensor.hours_until_next_user_time') | default(0) }}]
   }' http://localhost:5000/action/naive-mpc-optim
   
+post_naive_mpc_v4: >
+  curl -i -H "Content-Type: application/json" -X POST -d '{
+    "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prod_price_forecast":{{((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
+    "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
+    "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
+    "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
+    "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
+    "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
+    "P_deferrable_nom": [{% set value = states('sensor.go_echarger_265216_nrg_12')|int %}{{ value if value >= 5500 else 5500 }}],
+    "weight_battery_discharge": 0.30,
+    "weight_battery_charge": 0.40,
+    "alpha": 1,
+    "beta": 0,
+    "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
+    "def_end_timestep":[{{ states('sensor.hours_until_next_user_time') | default(0) }}]
+  }' http://localhost:5000/action/naive-mpc-optim 
+
 naive_mpc_optim_blue: >
     curl -i -H "Content-Type:application/json" -X POST -d '{{ payload }}' http://localhost:5000/action/naive-mpc-optim
     
@@ -95,23 +131,3 @@ post_naive_mpc_automation: >
 ################################################################################
 ###                            END                                           ###
 ################################################################################
-
-# post_naive_mpc_org: >
-#   curl -i -H "Content-Type: application/json" -X POST -d '{
-#     "load_cost_forecast":{{((state_attr("sensor.nordpool_tibber", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-#     "prod_price_forecast":{{((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") | map(attribute="value") | list  + state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list))[now().hour:][:24] }},
-#     "prediction_horizon":{{min(24, (((state_attr("sensor.nordpool_tibber", "raw_today")|map(attribute="value")|list + state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value")| list)[now().hour:][:24]|list|length)))}},
-#     "pv_power_forecast":{{([states("sensor.inverter_input_power")|int(0)] + state_attr("sensor.solcast_pv_forecast_forecast_today", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list + state_attr("sensor.solcast_pv_forecast_forecast_tomorrow", "detailedHourly")|selectattr("period_start","gt",utcnow()) | map(attribute="pv_estimate")|map("multiply",1000)|map("int")|list)| tojson}},
-#     "load_power_forecast":{{[states('sensor.power_load_novar_loads')|int] +(states('input_text.fifo_buffer').split(',')|map('int')|list)[1:]}},
-#     "soc_init":{{ max(0,states("sensor.battery_state_of_capacity")|int(0))/100 }},
-#     "soc_final":{{ max(100,states("number.battery_end_of_discharge_soc")|int(0))/100 }},
-#     "P_deferrable_nom": [{% set value = states('sensor.go_echarger_265216_nrg_12')|int %}{{ value if value >= 200 else 200 }}],
-#     "weight_battery_discharge": 0.15,
-#     "weight_battery_charge": 0.07,
-#     "alpha": 1,
-#     "beta": 0,
-#     "def_total_hours":[{{ states('sensor.c40_additional_charge_hours_if_connected') | default(0) }}],
-#     "def_end_timestep":[0]
-#   }' http://localhost:5000/action/naive-mpc-optim
-
-
