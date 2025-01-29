@@ -1,4 +1,4 @@
-# **EMHASS Setup in Home Assistant**  
+# **My EMHASS Setup in Home Assistant**  
 
 ## **Overview**  
 **[EMHASS (Energy Management for Home Assistant)](https://github.com/davidusb-geek/emhass)** is an open-source tool designed to optimize energy consumption in your smart home. By leveraging real-time data such as electricity prices, solar production, and household energy usage, EMHASS creates schedules to reduce costs and improve efficiency.  
