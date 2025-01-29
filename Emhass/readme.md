@@ -84,7 +84,7 @@ Follow the installation instructions in the official [EMHASS GitHub Repository](
 ---
 
 ## **Contributing**  
-Feel free to open an issue or submit a pull request if you have ideas or improvements for this setup. Collaboration is welcome!  
+Feel free to open an issue if you have ideas or improvements for this setup. Collaboration is welcome!  
 
 ---
 
