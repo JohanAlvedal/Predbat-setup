@@ -25,7 +25,7 @@ sensor:
     entity_id: sensor.power_load_novar_loads
     filters:
       - filter: time_simple_moving_average
-        window_size: "00:01"  # Beräknar medelvärdet över varje minut
+        window_size: "00:01"  # Calculates the average over each minute
         precision: 2
         
   - platform: filter
@@ -33,7 +33,7 @@ sensor:
     entity_id: sensor.1_minute_average
     filters:
       - filter: time_simple_moving_average
-        window_size: "00:15"  # Beräknar medelvärdet över 15 minuter
+        window_size: "00:15"  # Calculates the average over 15 minutes
         precision: 2
       
   - platform: filter
@@ -41,12 +41,12 @@ sensor:
     entity_id: sensor.1_minute_average
     filters:
       - filter: time_simple_moving_average
-        window_size: "00:30"  # Beräknar medel över 30 minuter
+        window_size: "00:30"  # Calculates the average over 30 minutes
         precision: 2
         
-#### Carcharger sensors#########################################################
+#### Car charger sensors #########################################################
 
-  # Percentage of charge we can add to a max of 90%, based on the Volvo integration
+  # Percentage of charge that can be added up to a max of 90%, based on the Volvo integration
   - platform: template
     sensors:
       c40_additional_charge_percentage:
@@ -61,7 +61,7 @@ sensor:
             {{ (max_charge - current_charge) }}
           {% endif %}
 
-  # Multiplied by battery capacity 67 kWh
+  # Multiplied by battery capacity of 67 kWh
   - platform: template
     sensors:
       c40_additional_charge_kwh:
@@ -79,16 +79,7 @@ sensor:
         value_template: >
           {{ ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) | round(0, "ceil", 0) }}
 
-#   # Check the Go-e charger if the car is connected, otherwise the number of hours is 0
-#   - platform: template
-#     sensors:
-#       c40_additional_charge_hours_if_connected:
-#         unit_of_measurement: "h"
-#         device_class: duration
-#         value_template: >
- 
-#          {{ (states('sensor.c40_additional_charge_hours') | int if states('binary_sensor.go_echarger_265216_car') in ("on", "ready_to_charge", "charging") else 0) }}
-
+  # Check the Go-e charger if the car is connected, otherwise the number of hours is 0
   - platform: template
     sensors:
       c40_additional_charge_hours_if_connected:
@@ -100,16 +91,16 @@ sensor:
           {% set today_prices = state_attr('sensor.nordpool_tibber', 'today') | default([]) %}
           {% set tomorrow_prices = state_attr('sensor.nordpool_tibber', 'tomorrow') | default([]) %}
         
-          {# Kombinera dagens och morgondagens priser om morgondagens priser är giltiga #}
+          {# Combine today's and tomorrow's prices if tomorrow's prices are valid #}
           {% set all_prices = today_prices + (tomorrow_prices if state_attr('sensor.nordpool_tibber', 'tomorrow_valid') else []) %}
         
-          {# Ta ut priserna för de kommande 10 timmarna #}
+          {# Extract prices for the next 10 hours #}
           {% set next_10_hours = all_prices[now().hour:now().hour + 10] %}
         
-          {# Kontrollera om det finns ett pris som är lägre än maxpriset inom de kommande 10 timmarna #}
+          {# Check if there is a price lower than the max price within the next 10 hours #}
           {% set price_below_max = next_10_hours | select('lt', max_price) | list %}
         
-          {# Om nuvarande pris är högre än maxpris och det inte finns några låga priser, returnera 0 #}
+          {# If the current price is higher than max price and no lower prices exist, return 0 #}
           {% if current_price > max_price and price_below_max | length == 0 %}
             0
           {% else %}
@@ -148,7 +139,6 @@ sensor:
             unknown
           {% endif %}
 
-   
 input_number:
   c40_max_charge_percentage:
     name: "Max Charge Percentage"
@@ -159,9 +149,8 @@ input_number:
     mode: slider
     icon: mdi:battery-charging
 
-
   max_ore_value:
-    name: "Max charge cost"
+    name: "Max Charge Cost"
     min: 0
     max: 500
     step: 0.1
@@ -169,7 +158,6 @@ input_number:
     mode: box  
     icon: mdi:currency-usd
 
-   
 input_datetime:
   klar_tid:
     name: "Car Time Done"
