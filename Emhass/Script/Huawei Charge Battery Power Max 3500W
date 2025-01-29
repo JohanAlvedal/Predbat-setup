@@ -1,0 +1,18 @@
+sequence:
+  - condition: template
+    value_template: |
+      {{ states('number.battery_maximum_charging_power') | int(0) != 
+        (states('sensor.limited_power') | int(0) | abs ) | int }}
+  - target:
+      entity_id: number.battery_maximum_charging_power
+    data:
+      value: >-
+        {{ (states('sensor.p_batt_forecast') | int(0) | abs) | int if
+        (states('sensor.p_batt_forecast') | int(0) | abs) | int <= 3500 else
+        3500 }}
+    action: number.set_value
+alias: Huawei Charge Battery Power Max 3500W
+description: >-
+  Dynamically set the maximum battery discharging power, up to 3500W. Ideal for
+  daytime usage or during EV charging.
+icon: mdi:battery-charging-20
