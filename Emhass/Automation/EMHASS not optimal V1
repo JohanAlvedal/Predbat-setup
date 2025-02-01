@@ -1,0 +1,48 @@
+alias: EMHASS not optimal
+description: " if not optimal charge 30 min"
+triggers:
+  - entity_id:
+      - sensor.optim_status
+    from: Optimal
+    id: Not optimal
+    trigger: state
+  - entity_id:
+      - sensor.optim_status
+    to: Optimal
+    id: Optimal
+    trigger: state
+conditions: []
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - Not optimal
+        sequence:
+          - metadata: {}
+            data:
+              title: EMHASS
+              message: System has become infeasible
+            action: notify.mobile_app_iphone13pro
+          - if:
+              - condition: numeric_state
+                entity_id: sensor.battery_state_of_capacity
+                below: sensor.soc_batt_forecast
+            then:
+              - action: huawei_solar.forcible_charge
+                data:
+                  duration: 15
+                  power: "3500"
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+      - conditions:
+          - condition: trigger
+            id:
+              - Optimal
+        sequence:
+          - metadata: {}
+            data:
+              title: EMHASS
+              message: System has become optimal
+            enabled: true
+            action: notify.mobile_app_iphone13pro
+mode: single
