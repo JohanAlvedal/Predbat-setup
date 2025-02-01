@@ -41,6 +41,10 @@ actions:
                 action: huawei_solar.stop_forcible_charge
         alias: EMHASS (STOP) FDC FC Follow grid
       - conditions:
+          - condition: numeric_state
+            entity_id: sensor.battery_state_of_capacity
+            below: 97
+            enabled: true
           - condition: and
             conditions:
               - condition: numeric_state
@@ -53,11 +57,6 @@ actions:
               - condition: state
                 entity_id: sensor.emhass_battery_mode
                 state: Forcible Charge
-          - condition: numeric_state
-            entity_id: sensor.battery_state_of_capacity
-            above: 0
-            below: 97
-            enabled: true
         sequence:
           - action: huawei_solar.forcible_charge_soc
             data:
