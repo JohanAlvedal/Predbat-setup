@@ -73,10 +73,10 @@ actions:
                 entity_id: sensor.emhass_battery_mode
                 state: Forcible Charge
         sequence:
-          - alias: 06:00-22:30
+          - alias: 07:00-22:30
             if:
               - condition: time
-                after: "06:00:00"
+                after: "07:00:00"
                 before: "22:30:00"
             then:
               - if:
@@ -98,11 +98,11 @@ actions:
                   seconds: 5
               - action: script.huawei_discharging_power_0w
                 data: {}
-          - alias: 22:30-06:00
+          - alias: 22:30-07:00
             if:
               - condition: time
                 after: "22:30:00"
-                before: "06:00:00"
+                before: "07:00:00"
             then:
               - if:
                   - condition: numeric_state
@@ -136,6 +136,29 @@ actions:
           - condition: trigger
             id:
               - timetrigger
+          - condition: and
+            conditions:
+              - condition: sun
+                after: sunrise
+                before: sunset
+              - condition: numeric_state
+                entity_id: sensor.inverter_input_power
+                above: 500
+        sequence:
+          - action: script.huawei_charging_power_5000w
+            data: {}
+            enabled: true
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+          - action: script.huawei_discharging_power_0w
+            data: {}
+        alias: EMHASS (Charge) Sun daytime
+      - conditions:
+          - condition: trigger
+            id:
+              - timetrigger
               - EMHASS Battery Mode
           - condition: or
             conditions:
@@ -147,9 +170,6 @@ actions:
                   - condition: state
                     entity_id: sensor.emhass_battery_mode
                     state: Do Nothing
-              - condition: trigger
-                id:
-                  - "3"
               - condition: state
                 entity_id: sensor.limited_power
                 state: "0"
