@@ -1,5 +1,12 @@
 #### START ########################################################
 
+publish_data:
+  url: "http://localhost:5000/action/publish-data"
+  method: "post"
+  headers:
+    Content-Type: "application/json"
+  payload: "{}"
+
 emhass_model_tune:
   url: "http://localhost:5000/action/forecast-model-tune"
   method: POST
