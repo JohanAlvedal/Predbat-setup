@@ -1,4 +1,4 @@
-alias: EMHASS POWER Control V2
+alias: EMHASS POWER Control V2.1
 description: ""
 triggers:
   - entity_id:
@@ -14,9 +14,13 @@ triggers:
       - sensor.p_batt_forecast
     attribute: battery_scheduled_power
     id: Battery_Power_Forecast
+  - trigger: state
+    entity_id:
+      - sensor.limited_power
   - trigger: time_pattern
-    minutes: /1
+    minutes: /2
     id: timetrigger
+    enabled: false
 conditions: []
 actions:
   - choose:
@@ -46,16 +50,12 @@ actions:
                 metadata: {}
                 data: {}
             else:
-              - action: script.huawei_limited_power_forecast
-                data: {}
-                enabled: true
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 5
-              - action: script.huawei_charging_power_0w
+              - action: script.huawei_p_batt_forecast
                 metadata: {}
                 data: {}
+              - action: script.huawei_limited_power_forecast
+                data: {}
+                enabled: false
         alias: EMHASS (Discharge) Power
       - conditions:
           - condition: trigger
@@ -169,7 +169,7 @@ actions:
                     state: "0.00"
                   - condition: state
                     entity_id: sensor.emhass_battery_mode
-                    state: Do Nothing
+                    state: Idle
               - condition: state
                 entity_id: sensor.limited_power
                 state: "0"
@@ -181,18 +181,18 @@ actions:
               minutes: 0
               seconds: 3
             enabled: true
-          - action: script.huawei_charging_power_0w
-            data: {}
-            enabled: true
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 3
-            enabled: true
           - action: huawei_solar.stop_forcible_charge
             metadata: {}
             data:
               device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 3
+            enabled: false
+          - action: script.huawei_charging_power_0w
+            data: {}
+            enabled: false
         alias: EMHASS (STOP) power
       - conditions:
           - condition: trigger
