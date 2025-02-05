@@ -1,8 +1,8 @@
 alias: Post Naive MPC Automation_V2.1
 description: ""
 triggers:
-  - trigger: time_pattern
-    minutes: /5
+  - minutes: /5
+    trigger: time_pattern
 actions:
   - data:
       payload: |
@@ -24,12 +24,10 @@ actions:
         }
     action: rest_command.post_naive_mpc_automation
   - delay:
-      hours: 0
-      minutes: 0
-      seconds: 3
-  - action: shell_command.publish_data
-    metadata: {}
+      seconds: 5
+  - action: rest_command.publish_data
     data: {}
+    enabled: true
 variables:
   load_cost_forecast: >
     {{ ((state_attr("sensor.nordpool_tibber", "raw_today") |
@@ -53,15 +51,16 @@ variables:
   soc_init: |
     {{ max(0, states("sensor.battery_state_of_capacity") | int(0)) / 100 }}
   soc_final: |
-    {{ max(100, states("number.battery_end_of_discharge_soc") | int(0)) / 100 }}
+    {{ states('number.battery_end_of_discharge_soc') | int(0) / 100 }}
   p_deferrable_nom: >
-    {% set value = states('sensor.go_echarger_265216_nrg_12') | int(0) %} {{
-    [value if value >= 200 else 200] | tojson }}
-  weight_battery_charge: "{{ states('input_number.weight_battery_charge') | float(0) }}"
-  weight_battery_discharge: "{{ states('input_number.weight_battery_discharge') | float(0) }}"
-  def_total_hours: >
-    {{ [states('sensor.c40_additional_charge_hours_if_connected') | default(0) |
-    int] | tojson }}
-  def_end_timestep: >
-    {{ [states('sensor.hours_until_next_user_time') | default(0) | int] | tojson
+    {{ [max(5200, states('sensor.go_echarger_265216_nrg_12') | int(0))] | tojson
     }}
+  weight_battery_charge: |
+    {{ states('input_number.weight_battery_charge') | float(0) }}
+  weight_battery_discharge: |
+    {{ states('input_number.weight_battery_discharge') | float(0) }}
+  def_total_hours: >
+    {{ [states('sensor.c40_additional_charge_hours_if_connected') | int(0)] |
+    tojson }}
+  def_end_timestep: |
+    {{ [states('sensor.hours_until_next_user_time') | int(0)] | tojson }}
