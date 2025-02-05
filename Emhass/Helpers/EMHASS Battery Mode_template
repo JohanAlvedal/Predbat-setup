@@ -8,7 +8,7 @@
   {% set p_grid = p_grid | float(0) %}
   
   {% if p_batt == 0 %}
-    Do Nothing
+    Idle
   {% elif p_grid == 0 %}
     Follow Grid
   {% elif p_batt < 0 %}
