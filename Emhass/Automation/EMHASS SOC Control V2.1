@@ -1,4 +1,4 @@
-alias: EMHASS SOC Control V2
+alias: EMHASS SOC Control V2.1
 description: ""
 triggers:
   - trigger: state
@@ -10,6 +10,7 @@ triggers:
     attribute: battery_scheduled_soc
   - trigger: time_pattern
     minutes: /2
+    enabled: false
 conditions: []
 actions:
   - choose:
@@ -23,7 +24,7 @@ actions:
                     state: "0.00"
                   - condition: state
                     entity_id: sensor.emhass_battery_mode
-                    state: Do Nothing
+                    state: Idle
                   - condition: state
                     entity_id: sensor.emhass_battery_mode
                     state: Follow Grid
@@ -85,9 +86,9 @@ actions:
                 below: 12
             then:
               - data:
-                  duration: 60
                   power: "5000"
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                  duration: 240
                 action: huawei_solar.forcible_discharge
             else:
               - data:
