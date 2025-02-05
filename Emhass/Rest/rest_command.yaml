@@ -2,14 +2,14 @@
 
 publish_data:
   url: "http://localhost:5000/action/publish-data"
-  method: "post"
+  method: "POST"
   headers:
     Content-Type: "application/json"
   payload: "{}"
 
 emhass_model_tune:
   url: "http://localhost:5000/action/forecast-model-tune"
-  method: POST
+  method: "POST"
   headers:
     Content-Type: "application/json"
   payload: >
@@ -21,10 +21,21 @@ emhass_model_tune:
       "split_date_delta": "24h",
       "perform_backtest": true
     }
+    
+forecast_model_predict:
+  url: "http://localhost:5000/action/forecast-model-predict"
+  method: "POST"
+  headers:
+    Content-Type: "application/json"
+  payload: >
+    {
+      "model_type": "load_forecast",
+      "var_model": "sensor.power_load_novar_loads"
+    }
 
 emhass_model_fit:
   url: "http://localhost:5000/action/forecast-model-fit"
-  method: post
+  method: "POST"
   headers:
     Content-Type: "application/json"
   payload: >
@@ -40,7 +51,7 @@ emhass_model_fit:
     
 post_naive_mpc_automation:
   url: "http://localhost:5000/action/naive-mpc-optim"
-  method: "post"
+  method: "POST"
   headers:
     Content-Type: "application/json"
   payload: "{{ payload }}"
