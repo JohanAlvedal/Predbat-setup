@@ -1,52 +1,34 @@
-alias: Predbat STOP Freeze Hold Demand
+alias: Predbat STOP Freeze Hold Demand V2
 description: ""
 triggers:
-  - entity_id:
-      - predbat.status
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
+  - entity_id: predbat.status
+    to: Hold charging
     id: Hold charging
     trigger: state
-    to: Hold charging
-  - entity_id:
-      - predbat.status
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
+  - entity_id: predbat.status
+    to: Freeze charging
     id: Freeze charging
     trigger: state
-    to: Freeze charging
-  - entity_id:
-      - predbat.status
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
+  - entity_id: predbat.status
+    to: Hold exporting
     id: Hold exporting
     trigger: state
-    to: Hold exporting
-  - entity_id:
-      - predbat.status
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
-    id: "Freeze exporting "
-    trigger: state
+  - entity_id: predbat.status
     to: Freeze exporting
-  - trigger: state
-    entity_id:
-      - predbat.status
+    id: Freeze exporting
+    trigger: state
+  - entity_id: predbat.status
     to: Hold for car
     id: Hold for Car
-  - trigger: state
-    entity_id:
-      - predbat.status
+    trigger: state
+  - entity_id: predbat.status
     to: Demand
     id: Demand
+    trigger: state
+  - minutes: /1
+    id: time
+    enabled: true
+    trigger: time_pattern
 conditions:
   - condition: or
     conditions:
@@ -72,32 +54,23 @@ actions:
   - choose:
       - conditions:
           - condition: trigger
-            id:
-              - Hold for Car
+            id: Hold for Car
         sequence:
           - action: script.huawei_discharging_power_0w
             data: {}
       - conditions:
           - condition: trigger
             id:
-              - "Freeze exporting "
+              - Freeze exporting
               - Hold exporting
         sequence:
           - action: huawei_solar.stop_forcible_charge
             data:
               device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-              milliseconds: 0
+          - delay: 3
           - action: script.huawei_charging_power_4500w
             data: {}
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-              milliseconds: 0
+          - delay: 3
           - action: script.huawei_discharging_power_0w
             data: {}
       - conditions:
@@ -105,15 +78,12 @@ actions:
             id:
               - Freeze charging
               - Hold charging
+              - time
         sequence:
           - action: huawei_solar.stop_forcible_charge
             data:
               device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-              milliseconds: 0
+          - delay: 3
           - if:
               - condition: numeric_state
                 entity_id: sensor.inverter_input_power
@@ -131,52 +101,45 @@ actions:
                     state: spring
             then:
               - action: script.huawei_charging_power_0w
-                metadata: {}
                 data: {}
             else:
               - action: script.huawei_charging_power_4500w
-                metadata: {}
                 data: {}
-            enabled: true
+            enabled: false
           - action: script.huawei_discharging_power_0w
-            metadata: {}
+            data: {}
+          - delay: 3
+          - action: script.huawei_charging_power_0w
             data: {}
       - conditions:
           - condition: trigger
             id:
               - Demand
+              - time
         sequence:
           - if:
+              - condition: sun
+                before: sunrise
+                after: sunset
               - condition: time
                 after: "23:00:00"
-                before: "06:00:00"
+                before: "08:00:00"
+                enabled: false
             then:
               - action: huawei_solar.stop_forcible_charge
                 data:
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 10
-                  milliseconds: 0
+              - delay: 5
               - action: script.huawei_discharging_power_0w
                 data: {}
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 5
-                  milliseconds: 0
+              - delay: 3
               - action: script.huawei_charging_power_0w
                 data: {}
             else:
               - action: huawei_solar.stop_forcible_charge
                 data:
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 5
-                  milliseconds: 0
+              - delay: 3
               - if:
                   - condition: numeric_state
                     entity_id: sensor.battery_state_of_capacity
@@ -201,18 +164,10 @@ actions:
                       - action: script.huawei_discharging_power_5200w
                         data: {}
                     else:
-                      - action: script.huawei_discharging_power_4500w
+                      - action: script.huawei_discharging_power_5000
                         data: {}
-                        enabled: true
-                enabled: true
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 5
-                  milliseconds: 0
-                enabled: true
+              - delay: 3
               - action: script.huawei_charging_power_4500w
                 data: {}
-                enabled: true
-mode: parallel
+mode: restart
 max: 10
