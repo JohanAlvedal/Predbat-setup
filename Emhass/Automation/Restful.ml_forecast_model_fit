@@ -1,0 +1,18 @@
+alias: Restful.ml_forecast_model_fit
+description: ""
+triggers:
+  - trigger: time
+    at: "23:55:00"
+conditions: []
+actions:
+  - action: rest_command.emhass_model_fit
+    metadata: {}
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  - action: rest_command.publish_data
+    metadata: {}
+    data: {}
+mode: single
