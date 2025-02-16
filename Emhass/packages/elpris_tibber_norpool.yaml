@@ -14,7 +14,7 @@ sensor:
       - tomorrow
     value_template: Ok
     headers:
-      Authorization: "YOUR HEX HERE"
+      Authorization: "228d305b78a81fcd5441995a20a5160c599f49b29e0b806154d5a66e86e49e1c"
       Content-Type: application/json
       User-Agent: REST
 
@@ -35,6 +35,15 @@ sensor:
       text_el_pris:
         friendly_name: "Text elpris"
         value_template: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
+
+      tibber_total_price:
+        unit_of_measurement: "Sek/kWh"
+        friendly_name: "Tibber Totalpris"
+        value_template: >-
+          {{ states('sensor.nordpool_kwh_se3_sek_3_10_025') | float + 0.09 + 
+          ((49 / (now().replace(day=1, month=now().month % 12 + 1) - timedelta(days=1)).day) / 24) }}
+        unique_id: tibber_total_price
+
 ################################################################################
 ##  END
 ################################################################################
