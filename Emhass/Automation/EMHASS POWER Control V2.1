@@ -18,9 +18,9 @@ triggers:
     entity_id:
       - sensor.limited_power
   - trigger: time_pattern
-    minutes: /2
     id: timetrigger
-    enabled: false
+    enabled: true
+    seconds: /55
 conditions: []
 actions:
   - choose:
@@ -50,12 +50,9 @@ actions:
                 metadata: {}
                 data: {}
             else:
-              - action: script.huawei_p_batt_forecast
-                metadata: {}
-                data: {}
               - action: script.huawei_limited_power_forecast
                 data: {}
-                enabled: false
+                enabled: true
         alias: EMHASS (Discharge) Power
       - conditions:
           - condition: trigger
@@ -84,12 +81,12 @@ actions:
                     entity_id: sensor.p_deferrable0
                     above: 50
                 then:
-                  - action: script.huawei_charge_limited_power_max_3500w
+                  - action: script.huawei_charge_limited_power_max3500w
                     metadata: {}
                     data: {}
                 enabled: true
                 else:
-                  - action: script.huawei_charging_power_5200w
+                  - action: script.huawei_charge_limited_power_max4000w
                     metadata: {}
                     data: {}
               - delay:
@@ -132,29 +129,6 @@ actions:
               - action: script.huawei_discharging_power_0w
                 data: {}
         alias: EMHASS (Charge) Power
-      - conditions:
-          - condition: trigger
-            id:
-              - timetrigger
-          - condition: and
-            conditions:
-              - condition: sun
-                after: sunrise
-                before: sunset
-              - condition: numeric_state
-                entity_id: sensor.inverter_input_power
-                above: 500
-        sequence:
-          - action: script.huawei_charging_power_5000w
-            data: {}
-            enabled: true
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-          - action: script.huawei_discharging_power_0w
-            data: {}
-        alias: EMHASS (Charge) Sun daytime
       - conditions:
           - condition: trigger
             id:
@@ -238,8 +212,11 @@ actions:
                 else:
                   - action: script.emhass_charging_power_2500
                     data: {}
+                    enabled: false
+                  - action: script.huawei_charging_power_5000w
+                    data: {}
                     enabled: true
             enabled: true
         alias: EMHASS (Discharge/Charge) Power Follow grid
-mode: parallel
-max: 10
+mode: queued
+max: 3
