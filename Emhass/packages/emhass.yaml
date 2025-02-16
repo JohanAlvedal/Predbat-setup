@@ -15,6 +15,23 @@ sensor:
           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(default=0) %}
           {% set value = (powerload - laddbox_power) | round(1) %}
           {{ value }}
+          
+  - platform: template
+    sensors:
+      power_load_no_var_loads:
+        friendly_name: "Power load no var loads"
+        unit_of_measurement: "W"
+        device_class: "power"
+        unique_id: f8c3d9b2-7a4e-42d6-b9e1-3c8f1e5d67a1
+        value_template: >
+          {% set powerload = states('sensor.house_consumption_power') | float(0) %}
+          {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(0) %}
+          {{ (powerload - laddbox_power) | round(1) }}
+          
+#   - platform: rest
+#     name: "EMHASS Model Fit R2"
+#     resource: "http://localhost:5000/get/backtest-score"
+#     value_template: "{{ value_json.r2_score }}"
 
 ################################################################################
 ## Fifobuffer CONFIG by Johan71
@@ -70,14 +87,14 @@ sensor:
         value_template: >
           {{ 67 * (states('sensor.c40_additional_charge_percentage') | int) / 100 }}
 
-  # Charging with a max of 6 kWh
+  # Charging with a max of 4 kWh
   - platform: template
     sensors:
       c40_additional_charge_hours:
         unit_of_measurement: "h"
         device_class: duration
         value_template: >
-          {{ ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) | round(0, "ceil", 0) }}
+          {{ ((states('sensor.c40_additional_charge_kwh') | float) / 4.0) | round(0, "ceil", 0) }}
 
   # Check the Go-e charger if the car is connected, otherwise the number of hours is 0
   - platform: template
@@ -114,7 +131,7 @@ sensor:
         unit_of_measurement: "W"
         device_class: power
         value_template: >
-          {{ min(6700, ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) * 6400) | round(0, "ceil", 0) }}
+          {{ min(3950, ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) * 3950) | round(0, "ceil", 0) }}
 
   # Hours until next user-defined time
   - platform: template
@@ -139,6 +156,12 @@ sensor:
             unknown
           {% endif %}
 
+input_datetime:
+  klar_tid:
+    name: "Car Time Done"
+    has_date: false
+    has_time: true
+
 input_number:
   c40_max_charge_percentage:
     name: "Max Charge Percentage"
@@ -152,17 +175,31 @@ input_number:
   max_ore_value:
     name: "Max Charge Cost"
     min: 0
-    max: 500
-    step: 0.1
+    max: 4
+    step: 0.10
     unit_of_measurement: "kr"
     mode: box  
     icon: mdi:currency-usd
+    
+#### weight_battery ############################################################
 
-input_datetime:
-  klar_tid:
-    name: "Car Time Done"
-    has_date: false
-    has_time: true
+  weight_battery_discharge:
+    name: "weight battery discharge"
+    min: 0
+    max: 5
+    step: 0.01
+    unit_of_measurement: "kr"
+    mode: box  
+    icon: mdi:currency-usd
+    
+  weight_battery_charge:
+    name: "weight battery charge"
+    min: 0
+    max: 5
+    step: 0.01
+    unit_of_measurement: "kr"
+    mode: box  
+    icon: mdi:currency-usd
 
 ################################################################################
 # END
