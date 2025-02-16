@@ -9,8 +9,8 @@ triggers:
       - sensor.soc_batt_forecast
     attribute: battery_scheduled_soc
   - trigger: time_pattern
-    minutes: /2
-    enabled: false
+    minutes: /1
+    enabled: true
 conditions: []
 actions:
   - choose:
@@ -98,6 +98,16 @@ actions:
                   power: "5000"
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
                 action: huawei_solar.forcible_discharge_soc
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 3
+                  milliseconds: 0
+                enabled: false
+              - action: script.huawei_charging_power_4500w
+                metadata: {}
+                data: {}
+                enabled: false
         alias: EMHASS (Discharge) FDC
-mode: parallel
+mode: queued
 max: 10
