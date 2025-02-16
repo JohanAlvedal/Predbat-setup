@@ -55,7 +55,7 @@ variables:
   soc_final: |
     {{ states('number.battery_end_of_discharge_soc') | int(0) / 100 }}
   p_deferrable_nom: >
-    {{ [max(5200, states('sensor.go_echarger_265216_nrg_12') | int(0))] | tojson
+    {{ [max(3950, states('sensor.go_echarger_265216_nrg_12') | int(0))] | tojson
     }}
   weight_battery_charge: |
     {{ states('input_number.weight_battery_charge') | float(0) }}
