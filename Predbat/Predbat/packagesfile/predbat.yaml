@@ -8,7 +8,7 @@ sensor:
   - platform: template
     sensors:
       pv_power:
-        friendly_name: "PV Power kWh"
+        friendly_name: "PV Power kW"
         unit_of_measurement: "kW"
         unique_id: "pv_power"
         value_template: >
