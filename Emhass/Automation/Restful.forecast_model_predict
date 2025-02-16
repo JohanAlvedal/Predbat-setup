@@ -1,0 +1,18 @@
+alias: Restful.forecast_model_predict
+description: ""
+triggers:
+  - trigger: time
+    at: "05:20:00"
+conditions: []
+actions:
+  - action: rest_command.forecast_model_predict
+    metadata: {}
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  - action: rest_command.publish_data
+    metadata: {}
+    data: {}
+mode: single
