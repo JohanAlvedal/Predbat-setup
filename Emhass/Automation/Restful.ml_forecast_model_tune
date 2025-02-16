@@ -1,0 +1,19 @@
+alias: Restful.ml_forecast_model_tune
+description: ""
+triggers:
+  - trigger: time
+    at: "05:58:00"
+conditions: []
+actions:
+  - action: rest_command.emhass_model_tune
+    metadata: {}
+    data: {}
+    enabled: true
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  - action: rest_command.publish_data
+    metadata: {}
+    data: {}
+mode: single
