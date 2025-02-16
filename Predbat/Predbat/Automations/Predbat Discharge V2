@@ -1,4 +1,4 @@
-alias: "Predbat Discharge "
+alias: Predbat Discharge V2
 description: ""
 triggers:
   - entity_id:
@@ -12,20 +12,15 @@ triggers:
     to: Exporting
     enabled: true
   - trigger: time_pattern
-    minutes: /11
+    minutes: /1
     enabled: true
 conditions:
-  - condition: and
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.predbat_exporting
-        state: "on"
-      - condition: state
-        entity_id: binary_sensor.predbat_charging
-        state: "off"
   - condition: state
-    entity_id: automation.emhass_soc_control_v2
+    entity_id: binary_sensor.predbat_charging
     state: "off"
+  - condition: state
+    entity_id: binary_sensor.predbat_exporting
+    state: "on"
 actions:
   - if:
       - condition: numeric_state
