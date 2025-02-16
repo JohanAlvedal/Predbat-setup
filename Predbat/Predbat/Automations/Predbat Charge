@@ -18,6 +18,9 @@ conditions:
   - condition: state
     entity_id: binary_sensor.predbat_charging
     state: "on"
+  - condition: state
+    entity_id: predbat.status
+    state: Charging
 actions:
   - alias: 06:00-23:30
     if:
@@ -45,6 +48,7 @@ actions:
           - condition: state
             entity_id: predbat.status
             state: Charging
+            enabled: false
         then:
           - action: huawei_solar.forcible_charge_soc
             data:
