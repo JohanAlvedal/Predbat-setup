@@ -1,0 +1,19 @@
+alias: Emhass infesable soc to 5%
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.optim_status
+    to: Infeasible
+conditions:
+  - condition: numeric_state
+    entity_id: sensor.battery_state_of_capacity
+    below: 5
+  - condition: numeric_state
+    entity_id: sensor.battery_state_of_capacity
+    below: sensor.soc_batt_forecast
+actions:
+  - action: script.emhass_forcible_charge_to_5
+    metadata: {}
+    data: {}
+mode: single
