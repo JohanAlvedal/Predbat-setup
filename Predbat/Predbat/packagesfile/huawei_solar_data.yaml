@@ -34,7 +34,9 @@ sensor:
         unit_of_measurement: "W"
         device_class: power
         value_template: "{{ -min(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
-############################      
+        
+################################################################################    
+
       # Inverter calculations
       input_power_with_efficiency_loss:
         friendly_name: "Input Power with Efficiency Loss"
@@ -70,7 +72,8 @@ sensor:
         value_template: >
           {{ (states('sensor.inverter_daily_yield') | float(0)) - (states('sensor.battery_day_discharge') | float(0)) + (states('sensor.battery_day_charge') | float(0)) }}        
 
-      # Extra template sensors - do not modify
+####### Extra template sensors - do not modify #################################
+      # Grid to battery
       grid_to_battery:
         unique_id: grid_to_battery
         device_class: power
@@ -236,19 +239,19 @@ sensor:
           {% set inv_power = states('sensor.inverter_input_power') | float(0) %}
           {{ max(0, inv_power) }}
       
-      ########### SCHEDULED SoC (Battery State of Charge ) ###########
-      soc_scheduled_value:
-        friendly_name: "SoC Scheduled"
-        unique_id: soc_scheduled_value
-        unit_of_measurement: "%"
-        device_class: "battery"
-        value_template: >
-          {% set battery_scheduled_soc = state_attr('sensor.soc_batt_forecast', 'battery_scheduled_soc') %}
-          {% if battery_scheduled_soc is not none and battery_scheduled_soc|length > 0 %}
-            {{ battery_scheduled_soc[0] }}
-          {% else %}
-            0
-          {% endif %}
+    #   ########### SCHEDULED SoC (Battery State of Charge ) (EMHASS) ###########
+    #   soc_scheduled_value:
+    #     friendly_name: "SoC Scheduled"
+    #     unique_id: soc_scheduled_value
+    #     unit_of_measurement: "%"
+    #     device_class: "battery"
+    #     value_template: >
+    #       {% set battery_scheduled_soc = state_attr('sensor.soc_batt_forecast', 'battery_scheduled_soc') %}
+    #       {% if battery_scheduled_soc is not none and battery_scheduled_soc|length > 0 %}
+    #         {{ battery_scheduled_soc[0] }}
+    #       {% else %}
+    #         0
+    #       {% endif %}
 
 ### Automation 1: Do not feed to grid when power price becomes negative ###
 # automation:
