@@ -11,10 +11,12 @@ triggers:
       - predbat.best_charge_limit
     id: state
   - trigger: time_pattern
-    minutes: /1
-    seconds: /20
+    seconds: /57
     id: time
 conditions:
+  - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "off"
   - condition: state
     entity_id: binary_sensor.predbat_charging
     state: "on"
@@ -45,10 +47,6 @@ actions:
           - condition: state
             entity_id: binary_sensor.predbat_car_charging_slot
             state: "on"
-          - condition: state
-            entity_id: predbat.status
-            state: Charging
-            enabled: false
         then:
           - action: huawei_solar.forcible_charge_soc
             data:
