@@ -4,7 +4,10 @@ triggers:
   - trigger: state
     entity_id:
       - binary_sensor.predbat_car_charging_slot
-conditions: []
+conditions:
+  - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "off"
 actions:
   - if:
       - condition: state
