@@ -16,10 +16,3 @@ sensors:
     reset_high: 2.0
     country: SE
     max_age: 365
-  - name: sensor.temperatur_nu
-    days: 14
-    interval: 30
-    incrementing: False
-    units: c
-    future_periods: 100
-    country: SE
