@@ -16,6 +16,9 @@ triggers:
     enabled: true
 conditions:
   - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "off"
+  - condition: state
     entity_id: binary_sensor.predbat_charging
     state: "off"
   - condition: state
