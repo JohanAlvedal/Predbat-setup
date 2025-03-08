@@ -1,0 +1,286 @@
+alias: EMHASS SOC Power Control V3
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.soc_batt_forecast
+    attribute: battery_scheduled_soc
+    id: SOC Forecast
+  - trigger: state
+    entity_id:
+      - sensor.p_batt_forecast
+      - sensor.limited_power
+      - sensor.emhass_battery_mode
+    id: Power Forecast
+  - trigger: time_pattern
+    minutes: /1
+    enabled: true
+conditions:
+  - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "on"
+actions:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: sensor.emhass_battery_mode
+            state: Follow Grid
+            enabled: true
+        sequence:
+          - if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.batteries_forcible_charge
+                    state: Stopped
+            then:
+              - data:
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                action: huawei_solar.stop_forcible_charge
+            alias: " If Batteries Forcible is Stopped"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 2
+              milliseconds: 0
+          - action: script.huawei_discharging_power_5000
+            metadata: {}
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - if:
+              - condition: sun
+                after: sunset
+                before: sunrise
+            then:
+              - action: script.huawei_charging_power_0w
+                data: {}
+            else:
+              - action: script.huawei_charging_power_5000w
+                data: {}
+                enabled: true
+            enabled: true
+            alias: " If the sun after sunset before sunrise"
+        alias: EMHASS (STOP) FDCFC Follow grid
+      - conditions:
+          - condition: trigger
+            id:
+              - SOC Forecast
+              - Power Forecast
+            enabled: false
+          - condition: state
+            entity_id: sensor.emhass_battery_mode
+            state: Idle
+            enabled: true
+        sequence:
+          - if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.batteries_forcible_charge
+                    state: Stopped
+            then:
+              - data:
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                action: huawei_solar.stop_forcible_charge
+            alias: " If Batteries Forcible is Stopped"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 3
+              milliseconds: 0
+          - action: script.huawei_discharging_power_0w
+            metadata: {}
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 3
+              milliseconds: 0
+          - action: script.huawei_charging_power_0w
+            data: {}
+        alias: EMHASS (STOP) FDCFC Idle
+      - conditions:
+          - condition: and
+            conditions:
+              - condition: state
+                entity_id: sensor.emhass_battery_mode
+                state: Forcible Discharge
+              - condition: numeric_state
+                entity_id: sensor.p_batt_forecast
+                above: 10
+              - condition: numeric_state
+                entity_id: sensor.battery_state_of_capacity
+                above: sensor.soc_batt_forecast
+        sequence:
+          - if:
+              - condition: numeric_state
+                entity_id: sensor.soc_batt_forecast
+                below: 12
+            then:
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.battery_state_of_capacity
+                    below: 4
+                then:
+                  - action: script.huawei_discharging_power_0w
+                    metadata: {}
+                    data: {}
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 3
+                      milliseconds: 0
+                  - action: huawei_solar.stop_forcible_charge
+                    data:
+                      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                  - delay:
+                      hours: 0
+                      minutes: 0
+                      seconds: 3
+                      milliseconds: 0
+                  - action: script.huawei_charging_power_0w
+                    metadata: {}
+                    data: {}
+                else:
+                  - action: script.huawei_limited_power_forecast
+                    data: {}
+                    enabled: true
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 3
+                  milliseconds: 0
+              - if:
+                  - condition: not
+                    conditions:
+                      - condition: state
+                        entity_id: sensor.batteries_forcible_charge
+                        state: Stopped
+                then:
+                  - action: script.huawei_solar_stop_fcfdc
+                    metadata: {}
+                    data: {}
+            else:
+              - data:
+                  target_soc: >-
+                    {% set value = states('sensor.soc_batt_forecast') | int(0)
+                    %} {{ value if value >= 12 else 12 }}
+                  power: "5000"
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                action: huawei_solar.forcible_discharge_soc
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 3
+                  milliseconds: 0
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.battery_state_of_capacity
+                    below: 4
+                then:
+                  - action: script.huawei_discharging_power_0w
+                    metadata: {}
+                    data: {}
+                else:
+                  - action: script.huawei_limited_power_forecast
+                    data: {}
+                    enabled: true
+                  - action: script.huawei_discharging_power_5000
+                    metadata: {}
+                    data: {}
+                    enabled: false
+        alias: EMHASS (Discharge) FDC
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.battery_state_of_capacity
+            below: 97
+            enabled: true
+          - condition: and
+            conditions:
+              - condition: numeric_state
+                entity_id: sensor.p_batt_forecast
+                below: -50
+              - condition: state
+                entity_id: sensor.emhass_battery_mode
+                state: Forcible Charge
+              - condition: numeric_state
+                entity_id: sensor.soc_batt_forecast
+                above: sensor.battery_state_of_capacity
+                enabled: false
+        sequence:
+          - action: huawei_solar.forcible_charge_soc
+            data:
+              target_soc: >-
+                {% set value = states('sensor.soc_batt_forecast') | int(0) %} {{
+                value if value >= 12 else 12 }}
+              power: "5000"
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - alias: 07:00-22:30
+            if:
+              - condition: time
+                after: "07:00:00"
+                before: "22:30:00"
+            then:
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.p_deferrable0
+                    above: 50
+                then:
+                  - action: script.huawei_charge_limited_power_max3500w
+                    metadata: {}
+                    data: {}
+                enabled: true
+                else:
+                  - action: script.huawei_charge_limited_power_max4000w
+                    metadata: {}
+                    data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+              - action: script.huawei_discharging_power_0w
+                data: {}
+          - alias: 22:30-07:00
+            if:
+              - condition: time
+                after: "22:30:00"
+                before: "07:00:00"
+            then:
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.p_deferrable0
+                    above: 50
+                then:
+                  - action: script.huawei_charge_limited_power_max3500w
+                    metadata: {}
+                    data: {}
+                    enabled: true
+                enabled: true
+                else:
+                  - action: script.huawei_limited_power_charge
+                    metadata: {}
+                    data: {}
+                    enabled: true
+                  - action: script.huawei_charging_power_5000w
+                    data: {}
+                    enabled: false
+                  - action: script.huawei_charging_power_4500w
+                    data: {}
+                    enabled: false
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+              - action: script.huawei_discharging_power_0w
+                data: {}
+        alias: EMHASS (Charge) FC
+mode: restart
