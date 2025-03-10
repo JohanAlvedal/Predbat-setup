@@ -1,5 +1,5 @@
 alias: EMHASS SOC Power Control V3
-description: ""
+description: SOC and Power control Huawei battery with emhass
 triggers:
   - trigger: state
     entity_id:
@@ -8,13 +8,12 @@ triggers:
     id: SOC Forecast
   - trigger: state
     entity_id:
-      - sensor.p_batt_forecast
       - sensor.limited_power
       - sensor.emhass_battery_mode
     id: Power Forecast
   - trigger: time_pattern
     minutes: /1
-    enabled: true
+    enabled: false
 conditions:
   - condition: state
     entity_id: switch.predbat_set_read_only
@@ -222,7 +221,7 @@ actions:
           - delay:
               hours: 0
               minutes: 0
-              seconds: 5
+              seconds: 3
               milliseconds: 0
           - alias: 07:00-22:30
             if:
@@ -270,12 +269,6 @@ actions:
                     metadata: {}
                     data: {}
                     enabled: true
-                  - action: script.huawei_charging_power_5000w
-                    data: {}
-                    enabled: false
-                  - action: script.huawei_charging_power_4500w
-                    data: {}
-                    enabled: false
               - delay:
                   hours: 0
                   minutes: 0
