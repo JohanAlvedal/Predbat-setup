@@ -13,7 +13,7 @@ triggers:
     id: Power Forecast
   - trigger: time_pattern
     minutes: /1
-    enabled: false
+    enabled: true
 conditions:
   - condition: state
     entity_id: switch.predbat_set_read_only
@@ -65,11 +65,6 @@ actions:
             alias: " If the sun after sunset before sunrise"
         alias: EMHASS (STOP) FDCFC Follow grid
       - conditions:
-          - condition: trigger
-            id:
-              - SOC Forecast
-              - Power Forecast
-            enabled: false
           - condition: state
             entity_id: sensor.emhass_battery_mode
             state: Idle
@@ -109,17 +104,21 @@ actions:
                 entity_id: sensor.emhass_battery_mode
                 state: Forcible Discharge
               - condition: numeric_state
-                entity_id: sensor.p_batt_forecast
-                above: 10
-              - condition: numeric_state
                 entity_id: sensor.battery_state_of_capacity
                 above: sensor.soc_batt_forecast
+            alias: " If EMHASS Battery Mode is Forcible Discharge"
         sequence:
           - if:
               - condition: numeric_state
                 entity_id: sensor.soc_batt_forecast
                 below: 12
             then:
+              - action: huawei_solar.forcible_discharge
+                metadata: {}
+                data:
+                  duration: 120
+                  power: "5000"
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
               - if:
                   - condition: numeric_state
                     entity_id: sensor.battery_state_of_capacity
@@ -148,21 +147,6 @@ actions:
                   - action: script.huawei_limited_power_forecast
                     data: {}
                     enabled: true
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 3
-                  milliseconds: 0
-              - if:
-                  - condition: not
-                    conditions:
-                      - condition: state
-                        entity_id: sensor.batteries_forcible_charge
-                        state: Stopped
-                then:
-                  - action: script.huawei_solar_stop_fcfdc
-                    metadata: {}
-                    data: {}
             else:
               - data:
                   target_soc: >-
