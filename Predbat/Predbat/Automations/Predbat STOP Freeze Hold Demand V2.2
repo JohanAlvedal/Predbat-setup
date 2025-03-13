@@ -36,32 +36,41 @@ conditions:
 actions:
   - choose:
       - conditions:
-          - condition: trigger
-            id: Hold for Car
+          - condition: state
+            entity_id: predbat.status
+            state: Hold for Car
         sequence:
           - action: script.huawei_discharging_power_0w
             data: {}
       - conditions:
-          - condition: trigger
-            id:
-              - Freeze exporting
-              - Hold exporting
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: predbat.status
+                state: Hold exporting
+              - condition: state
+                entity_id: predbat.status
+                state: Freeze exporting
         sequence:
-          - action: huawei_solar.stop_forcible_charge
-            data:
-              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - alias: If FDCFC not stop, STOP
+            if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.batteries_forcible_charge
+                    state: Stopped
+            then:
+              - action: script.huawei_solar_stop_fcfdc
+                metadata: {}
+                data: {}
           - delay: 3
           - action: script.huawei_charging_power_4500w
             data: {}
           - delay: 3
           - action: script.huawei_discharging_power_0w
             data: {}
+        alias: If Status is Freeze exporting or Hold exporting
       - conditions:
-          - condition: trigger
-            id:
-              - Freeze charging
-              - Hold charging
-              - time
           - condition: or
             conditions:
               - condition: state
@@ -71,27 +80,43 @@ actions:
                 entity_id: predbat.status
                 state: Freeze charging
         sequence:
-          - action: huawei_solar.stop_forcible_charge
-            data:
-              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - alias: If FDCFC not stop, STOP
+            if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.batteries_forcible_charge
+                    state: Stopped
+            then:
+              - action: script.huawei_solar_stop_fcfdc
+                metadata: {}
+                data: {}
           - delay: 3
           - action: script.huawei_discharging_power_0w
             data: {}
           - delay: 3
+          - action: script.huawei_charging_power_5000w
+            data: {}
           - action: script.huawei_charging_power_0w
             data: {}
+            enabled: false
+        alias: If Status is Hold charging, Freeze Charging
       - conditions:
-          - condition: trigger
-            id:
-              - Demand
-              - time
           - condition: state
             entity_id: predbat.status
             state: Demand
         sequence:
-          - action: huawei_solar.stop_forcible_charge
-            data:
-              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - alias: If FDCFC not stop, STOP
+            if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: sensor.batteries_forcible_charge
+                    state: Stopped
+            then:
+              - action: script.huawei_solar_stop_fcfdc
+                metadata: {}
+                data: {}
           - delay:
               hours: 0
               minutes: 0
