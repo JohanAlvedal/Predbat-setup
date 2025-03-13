@@ -11,8 +11,7 @@ triggers:
       - predbat.best_charge_limit
     id: state
   - trigger: time_pattern
-    seconds: /57
-    id: time
+    minutes: /1
 conditions:
   - condition: state
     entity_id: switch.predbat_set_read_only
@@ -24,14 +23,8 @@ conditions:
     entity_id: predbat.status
     state: Charging
 actions:
-  - alias: 06:00-23:30
+  - alias: 06:00-23:30 Charge
     if:
-      - condition: trigger
-        id:
-          - Predbat_charging_on
-          - state
-          - time
-        enabled: true
       - condition: and
         conditions:
           - condition: numeric_state
@@ -60,8 +53,12 @@ actions:
               minutes: 0
               seconds: 5
               milliseconds: 0
+          - action: script.huawei_charging_power_dynamic
+            data: {}
+            enabled: false
           - action: script.huawei_charging_power_2500w
             data: {}
+            enabled: true
           - delay:
               hours: 0
               minutes: 0
@@ -98,8 +95,9 @@ actions:
               - action: script.huawei_discharging_power_0w
                 metadata: {}
                 data: {}
+            enabled: true
     enabled: true
-  - alias: 23:30-06:00
+  - alias: 23:30-06:00 Charge
     if:
       - condition: time
         after: "23:30:00"
