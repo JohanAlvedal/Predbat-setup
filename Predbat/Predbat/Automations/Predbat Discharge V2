@@ -25,10 +25,14 @@ conditions:
     entity_id: binary_sensor.predbat_exporting
     state: "on"
 actions:
-  - if:
+  - alias: Discharge
+    if:
       - condition: numeric_state
         entity_id: predbat.best_export_limit
         below: 12
+      - condition: state
+        entity_id: predbat.status
+        state: Exporting
     then:
       - data:
           duration: 120
