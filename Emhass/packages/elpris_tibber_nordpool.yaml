@@ -18,32 +18,28 @@ sensor:
       Content-Type: application/json
       User-Agent: REST
 
-  - platform: template
-    sensors:
-      peak_el_pris:
-        unit_of_measurement: "Sek/kWh"
-        friendly_name: "Peak elpris"
-        value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'peak') }}"
+template:
+  - sensor:
+      - name: "Peak elpris"
         unique_id: peak_el_pris
-
-      offpeak_el_pris:
         unit_of_measurement: "Sek/kWh"
-        friendly_name: "Offpeak elpris"
-        value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'off_peak_1') }}"
+        state: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'peak') }}"
+
+      - name: "Offpeak elpris"
         unique_id: offpeak_el_pris
-
-      text_el_pris:
-        friendly_name: "Text elpris"
-        value_template: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
-
-      tibber_total_price:
         unit_of_measurement: "Sek/kWh"
-        friendly_name: "Tibber Totalpris"
-        value_template: >-
+        state: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'off_peak_1') }}"
+
+      - name: "Text elpris"
+        unique_id: text_el_pris
+        state: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
+
+      - name: "Tibber Totalpris"
+        unique_id: tibber_total_price
+        unit_of_measurement: "Sek/kWh"
+        state: >-
           {{ states('sensor.nordpool_kwh_se3_sek_3_10_025') | float + 0.09 + 
           ((49 / (now().replace(day=1, month=now().month % 12 + 1) - timedelta(days=1)).day) / 24) }}
-        unique_id: tibber_total_price
-
 ################################################################################
 ##  END
 ################################################################################
