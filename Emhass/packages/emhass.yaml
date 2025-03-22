@@ -3,18 +3,18 @@
 ################################################################################
 # Do not remove; consider potential consequences.
 sensor:
-  - platform: template
-    sensors:
-      power_load_novar_loads:
-        friendly_name: "Power load novar loads"
-        unit_of_measurement: "W"
-        device_class: "power"
-        unique_id: ab0230e2-2e23-40d0-ac97-d5ddb74707ca
-        value_template: >
-          {% set powerload = states('sensor.house_consumption_power') | float(default=0) %}
-          {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(default=0) %}
-          {% set value = (powerload - laddbox_power) | round(1) %}
-          {{ value }}
+#   - platform: template
+#     sensors:
+#       power_load_novar_loads:
+#         friendly_name: "Power load novar loads"
+#         unit_of_measurement: "W"
+#         device_class: "power"
+#         unique_id: ab0230e2-2e23-40d0-ac97-d5ddb74707ca
+#         value_template: >
+#           {% set powerload = states('sensor.house_consumption_power') | float(default=0) %}
+#           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(default=0) %}
+#           {% set value = (powerload - laddbox_power) | round(1) %}
+#           {{ value }}
           
   - platform: template
     sensors:
@@ -39,7 +39,7 @@ sensor:
 
   - platform: filter
     name: "1_minute_average"
-    entity_id: sensor.power_load_novar_loads
+    entity_id: sensor.power_load_no_var_loads
     filters:
       - filter: time_simple_moving_average
         window_size: "00:01"  # Calculates the average over each minute
@@ -131,7 +131,7 @@ sensor:
         unit_of_measurement: "W"
         device_class: power
         value_template: >
-          {{ min(3950, ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) * 3950) | round(0, "ceil", 0) }}
+          {{ min(4000, ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) * 4000) | round(0, "ceil", 0) }}
 
   # Hours until next user-defined time
   - platform: template
@@ -200,6 +200,16 @@ input_number:
     unit_of_measurement: "kr"
     mode: box  
     icon: mdi:currency-usd
+    
+  soc_final:
+    name: soc_final
+    min: 2
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    mode: slider  
+    icon: mdi:battery-charging
+    
 
 ################################################################################
 # END
