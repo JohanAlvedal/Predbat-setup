@@ -1,0 +1,12 @@
+sequence:
+  - if:
+      - condition: state
+        entity_id: sensor.batteries_forcible_charge
+        state: Stopped
+    then: []
+    else:
+      - action: huawei_solar.stop_forcible_charge
+        data:
+          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+alias: Huawei solar STOP FCFDC
+description: ""
