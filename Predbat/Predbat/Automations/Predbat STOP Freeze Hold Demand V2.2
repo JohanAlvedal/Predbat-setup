@@ -5,10 +5,6 @@ triggers:
       - predbat.status
     id: Demand
     trigger: state
-  - minutes: /2
-    id: time
-    enabled: true
-    trigger: time_pattern
 conditions:
   - condition: state
     entity_id: switch.predbat_set_read_only
@@ -95,7 +91,7 @@ actions:
           - action: script.huawei_discharging_power_0w
             data: {}
           - delay: 3
-          - action: script.huawei_charging_power_5000w
+          - action: script.huawei_charging_power_4500w
             data: {}
           - action: script.huawei_charging_power_0w
             data: {}
