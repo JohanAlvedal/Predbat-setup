@@ -11,9 +11,6 @@ triggers:
       - predbat.status
     to: Exporting
     enabled: true
-  - trigger: time_pattern
-    minutes: /1
-    enabled: true
 conditions:
   - condition: state
     entity_id: switch.predbat_set_read_only
