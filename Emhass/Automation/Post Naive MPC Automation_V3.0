@@ -1,0 +1,65 @@
+alias: Post Naive MPC Automation_V3.0
+description: ""
+triggers:
+  - minutes: /5
+    trigger: time_pattern
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - data:
+      payload: |
+        {
+          "load_cost_forecast": {{ load_cost_forecast }},
+          "prod_price_forecast": {{ prod_price_forecast }},
+          "prediction_horizon": {{ prediction_horizon }},
+          "load_power_forecast": {{ load_power_forecast }},
+          "soc_init": {{ soc_init }},
+          "soc_final": {{ soc_final }},
+          "P_deferrable_nom": {{ p_deferrable_nom }},
+          "weight_battery_discharge": {{ weight_battery_discharge }},
+          "weight_battery_charge": {{ weight_battery_charge }},
+          "alpha": 1,
+          "beta": 0,
+          "def_total_hours": {{ def_total_hours }},
+          "def_end_timestep": {{ def_end_timestep }}
+        }
+    action: rest_command.post_naive_mpc_automation
+  - delay:
+      seconds: 5
+  - action: rest_command.publish_data
+    data: {}
+    enabled: true
+mode: single
+variables:
+  load_cost_forecast: >
+    {{ ((state_attr("sensor.nordpool_tibber", "raw_today") |
+    map(attribute="value") | list +
+         state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list) | default([]))[now().hour:][:24] | tojson }}
+  prod_price_forecast: >
+    {{ ((state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_today") |
+    map(attribute="value") | list +
+         state_attr("sensor.nordpool_kwh_se3_sek_3_10_025", "raw_tomorrow") | map(attribute="value") | list) | default([]))[now().hour:][:24] | tojson }}
+  prediction_horizon: >
+    {{ min(24, (state_attr("sensor.nordpool_tibber", "raw_today") |
+    map(attribute="value") | list +
+                 state_attr("sensor.nordpool_tibber", "raw_tomorrow") | map(attribute="value") | list | default([]))[now().hour:][:24] | length) }}
+  load_power_forecast: |
+    {{ ([states('sensor.power_load_no_var_loads') | int(0)] +
+        (states('input_text.fifo_buffer') | default("") | string).split(',') | map('int') | list)[1:] | tojson }}
+  soc_init: |
+    {{ max(0, states("sensor.battery_state_of_capacity") | int(0)) / 100 }}
+  soc_final: |
+    {{ states('input_number.soc_final') | int(0) / 100 }}
+  p_deferrable_nom: >
+    {{ [max(3000, states('sensor.go_echarger_265216_nrg_12') | int(0))] | tojson
+    }}
+  weight_battery_charge: |
+    {{ states('input_number.weight_battery_charge') | float(0) }}
+  weight_battery_discharge: |
+    {{ states('input_number.weight_battery_discharge') | float(0) }}
+  def_total_hours: >
+    {{ [states('sensor.c40_additional_charge_hours_if_connected') | int(0)] |
+    tojson }}
+  def_end_timestep: |
+    {{ [states('sensor.hours_until_next_user_time') | int(0)] | tojson }}
