@@ -1,45 +1,103 @@
 ################################################################################
 #                Detta är till för elpriserna                                  #
 ################################################################################
+input_number:
+  export_marginal:
+    name: Exportmarginal
+    min: 0
+    max: 5
+    step: 0.001
+    unit_of_measurement: "Sek/kWh"
+    mode: box
+
+  moms_skatt:
+    name: Moms / Skatt
+    min: 0
+    max: 100
+    step: 0.1
+    unit_of_measurement: "%"
+    mode: box
+
+  import_marginal:
+    name: Importmarginal
+    min: 0
+    max: 5
+    step: 0.001
+    unit_of_measurement: "Sek/kWh"
+    mode: box
+
+  overforings_avgift_import:
+    name: Överföringsavgift (import)
+    min: 0
+    max: 2
+    step: 0.001
+    unit_of_measurement: "Sek/kWh"
+    mode: box
+
+  elskatt:
+    name: Elskatt
+    min: 0
+    max: 2
+    step: 0.001
+    unit_of_measurement: "Sek/kWh"
+    mode: box
+    
+  saljpremie:
+    name: Säljpremie
+    min: 0
+    max: 5
+    step: 0.001
+    unit_of_measurement: "Sek/kWh"
+    mode: box
+
 sensor:
   - platform: rest
     name: Tibber prices
     resource: https://api.tibber.com/v1-beta/gql
     method: POST
     scan_interval: 60
-    payload: '{ "query": "{ viewer { homes { currentSubscription { priceInfo { today { total startsAt } tomorrow { total startsAt }}}}}}" }'
+    payload: >
+      {
+        "query": "{ viewer { homes { currentSubscription { priceInfo { today { total startsAt } tomorrow { total startsAt }}}}}}"
+      }
     json_attributes_path: "$.data.viewer.homes[0].currentSubscription.priceInfo"
     json_attributes:
       - today
       - tomorrow
     value_template: Ok
     headers:
-      Authorization: "228d305b78a81fcd5441995a20a5160c599f49b29e0b806154d5a66e86e49e1c"
+      Authorization: "KEY HERE"
       Content-Type: application/json
       User-Agent: REST
 
 template:
   - sensor:
-      - name: "Peak elpris"
-        unique_id: peak_el_pris
-        unit_of_measurement: "Sek/kWh"
-        state: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'peak') }}"
-
-      - name: "Offpeak elpris"
-        unique_id: offpeak_el_pris
-        unit_of_measurement: "Sek/kWh"
-        state: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'off_peak_1') }}"
-
       - name: "Text elpris"
         unique_id: text_el_pris
         state: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
 
-      - name: "Tibber Totalpris"
-        unique_id: tibber_total_price
+      - name: "Totalpris Köp"
+        unique_id: total_price_buy
         unit_of_measurement: "Sek/kWh"
         state: >-
-          {{ states('sensor.nordpool_kwh_se3_sek_3_10_025') | float + 0.09 + 
-          ((49 / (now().replace(day=1, month=now().month % 12 + 1) - timedelta(days=1)).day) / 24) }}
+          {% set spotpris = states('sensor.nordpool_kwh_se3_sek_3_10_0') | float(0) if states('sensor.nordpool_kwh_se3_sek_3_10_0') not in ['unavailable', 'unknown'] else 0 %}
+          {% set import_marginal = states('input_number.import_marginal') | float(0) %}
+          {% set overforing = states('input_number.overforings_avgift_import') | float(0) %}
+          {% set elskatt = states('input_number.elskatt') | float(0) %}
+          {% set moms = states('input_number.moms_skatt') | float(0) %}
+          {% set total = (spotpris + import_marginal + overforing + elskatt) * (1 + moms / 100) %}
+          {{ total | round(3) }}
+    
+      - name: "Totalpris Sälj (inkl. skattereduktion)"
+        unique_id: total_price_sell
+        unit_of_measurement: "Sek/kWh"
+        state: >-
+          {% set spotpris = states('sensor.nordpool_kwh_se3_sek_3_10_0') | float(0) if states('sensor.nordpool_kwh_se3_sek_3_10_0') not in ['unavailable', 'unknown'] else 0 %}
+          {% set saljpremie = states('input_number.saljpremie') | float(0) %}
+          {% set exportmarginal = states('input_number.export_marginal') | float(0) %}
+          {% set skattereduktion = 0.60 %}
+          {% set total_ersattning = spotpris + saljpremie + exportmarginal + skattereduktion %}
+          {{ total_ersattning | round(3) }}
 ################################################################################
-##  END
-################################################################################
+# ##  END
+# ################################################################################
