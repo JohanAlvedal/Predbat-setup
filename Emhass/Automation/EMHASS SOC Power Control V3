@@ -9,11 +9,16 @@ triggers:
   - trigger: state
     entity_id:
       - sensor.limited_power
-      - sensor.emhass_battery_mode
     id: Power Forecast
-  - trigger: time_pattern
-    minutes: /1
-    enabled: true
+  - entity_id:
+      - sensor.emhass_battery_mode
+    trigger: state
+    id: EMHASS Battery Mode
+    to: null
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 3
 conditions:
   - condition: state
     entity_id: switch.predbat_set_read_only
@@ -26,17 +31,9 @@ actions:
             state: Follow Grid
             enabled: true
         sequence:
-          - if:
-              - condition: not
-                conditions:
-                  - condition: state
-                    entity_id: sensor.batteries_forcible_charge
-                    state: Stopped
-            then:
-              - data:
-                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-                action: huawei_solar.stop_forcible_charge
-            alias: " If Batteries Forcible is Stopped"
+          - action: huawei_solar.stop_forcible_charge
+            data:
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
           - delay:
               hours: 0
               minutes: 0
@@ -51,6 +48,36 @@ actions:
               seconds: 5
               milliseconds: 0
           - if:
+              - condition: numeric_state
+                entity_id: sensor.go_echarger_265216_nrg_12
+                above: "500"
+            then:
+              - action: script.huawei_discharging_power_0w
+                metadata: {}
+                data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 3
+                  milliseconds: 0
+              - action: script.huawei_charging_power_5000w
+                data: {}
+                enabled: true
+            else:
+              - action: script.huawei_discharging_power_5000
+                metadata: {}
+                data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 3
+                  milliseconds: 0
+              - action: script.huawei_charging_power_5000w
+                data: {}
+                enabled: true
+            alias: "If Charging Car "
+          - alias: " If the sun after sunset before sunrise"
+            if:
               - condition: sun
                 after: sunset
                 before: sunrise
@@ -58,11 +85,10 @@ actions:
               - action: script.huawei_charging_power_0w
                 data: {}
             else:
-              - action: script.huawei_charging_power_5000w
+              - action: script.huawei_discharging_power_5000
+                metadata: {}
                 data: {}
-                enabled: true
             enabled: true
-            alias: " If the sun after sunset before sunrise"
         alias: EMHASS (STOP) FDCFC Follow grid
       - conditions:
           - condition: state
@@ -70,17 +96,9 @@ actions:
             state: Idle
             enabled: true
         sequence:
-          - if:
-              - condition: not
-                conditions:
-                  - condition: state
-                    entity_id: sensor.batteries_forcible_charge
-                    state: Stopped
-            then:
-              - data:
-                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-                action: huawei_solar.stop_forcible_charge
-            alias: " If Batteries Forcible is Stopped"
+          - action: huawei_solar.stop_forcible_charge
+            data:
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
           - delay:
               hours: 0
               minutes: 0
@@ -163,7 +181,7 @@ actions:
               - if:
                   - condition: numeric_state
                     entity_id: sensor.battery_state_of_capacity
-                    below: 4
+                    below: 5
                 then:
                   - action: script.huawei_discharging_power_0w
                     metadata: {}
@@ -172,10 +190,6 @@ actions:
                   - action: script.huawei_limited_power_forecast
                     data: {}
                     enabled: true
-                  - action: script.huawei_discharging_power_5000
-                    metadata: {}
-                    data: {}
-                    enabled: false
         alias: EMHASS (Discharge) FDC
       - conditions:
           - condition: numeric_state
@@ -190,10 +204,6 @@ actions:
               - condition: state
                 entity_id: sensor.emhass_battery_mode
                 state: Forcible Charge
-              - condition: numeric_state
-                entity_id: sensor.soc_batt_forecast
-                above: sensor.battery_state_of_capacity
-                enabled: false
         sequence:
           - action: huawei_solar.forcible_charge_soc
             data:
@@ -226,10 +236,15 @@ actions:
                   - action: script.huawei_charge_limited_power_max4000w
                     metadata: {}
                     data: {}
+                    enabled: false
+                  - action: script.huawei_charging_power_dynamic
+                    metadata: {}
+                    data: {}
               - delay:
                   hours: 0
                   minutes: 0
-                  seconds: 5
+                  seconds: 3
+                  milliseconds: 0
               - action: script.huawei_discharging_power_0w
                 data: {}
           - alias: 22:30-07:00
@@ -256,8 +271,19 @@ actions:
               - delay:
                   hours: 0
                   minutes: 0
-                  seconds: 5
+                  seconds: 3
+                  milliseconds: 0
               - action: script.huawei_discharging_power_0w
                 data: {}
         alias: EMHASS (Charge) FC
+  - if:
+      - condition: trigger
+        id:
+          - EMHASS Battery Mode
+    then:
+      - action: notify.mobile_app_iphone13pro
+        metadata: {}
+        data:
+          message: Battery {{ states('sensor.emhass_battery_mode') }}
+          title: Battery
 mode: restart
