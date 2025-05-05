@@ -16,7 +16,7 @@ sensor:
           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(0) %}
           {{ (powerload - laddbox_power) | round(1) }}
 
-#### Car charger sensors #########################################################
+#### Car charger sensors #######################################################
 
       c40_additional_charge_percentage:
         unit_of_measurement: "%"
@@ -89,7 +89,23 @@ sensor:
             24
           {% endif %}
 
-#### Fifobuffer CONFIG by Johan71 ####################################################
+      pv_forecast_energy_per_hour:
+        friendly_name: "PV Forecast Energy per Hour"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        value_template: >
+          {% set forecasts = state_attr('sensor.p_pv_forecast', 'forecasts') %}
+          {% if forecasts %}
+            {% set now_hour = now().replace(minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:00:00') %}
+            {% set match = forecasts | selectattr('date', 'search', now_hour) | list %}
+            {% if match %}
+              {{ (match[0].p_pv_forecast | float / 1000) | round(2) }}
+            {% else %}
+              0
+            {% endif %}
+          {% else %}
+            0
+          {% endif %}
 
   - platform: filter
     name: "1_minute_average"
@@ -97,7 +113,7 @@ sensor:
     filters:
       - filter: time_simple_moving_average
         window_size: "00:01"
-        precision: 2
+        precision: 0
 
   - platform: filter
     name: "15_minute_average"
@@ -105,7 +121,7 @@ sensor:
     filters:
       - filter: time_simple_moving_average
         window_size: "00:15"
-        precision: 2
+        precision: 0
 
   - platform: filter
     name: "30_minute_average"
@@ -113,11 +129,7 @@ sensor:
     filters:
       - filter: time_simple_moving_average
         window_size: "00:30"
-        precision: 2
-
-################################################################################
-## Input helpers
-################################################################################
+        precision: 0
 
 input_datetime:
   klar_tid:
@@ -144,8 +156,6 @@ input_number:
     mode: box
     icon: mdi:currency-usd
 
-#### weight_battery ############################################################
-
   weight_battery_discharge:
     name: "weight battery discharge"
     min: 0
@@ -163,8 +173,6 @@ input_number:
     unit_of_measurement: "kr"
     mode: box
     icon: mdi:currency-usd
-    
-#### Till Bilen ################################################################
 
   soc_final:
     name: soc_final
@@ -177,257 +185,6 @@ input_number:
 
 input_boolean:
   use_klar_tid:
-    name: Använd Klar Tid  ## Om du inte vill använda dig av en klatid utan läter laddaren sitta i ladda nr det är billigast 
+    name: Använd Klar Tid
     icon: mdi:clock-outline
-
-################################################################################
-# END
-################################################################################
-
-
-# ################################################################################
-# ## EMHASS CONFIG by Johan71
-# ################################################################################
-# # Do not remove; consider potential consequences.
-# sensor:
-# #   - platform: template
-# #     sensors:
-# #       power_load_novar_loads:
-# #         friendly_name: "Power load novar loads"
-# #         unit_of_measurement: "W"
-# #         device_class: "power"
-# #         unique_id: ab0230e2-2e23-40d0-ac97-d5ddb74707ca
-# #         value_template: >
-# #           {% set powerload = states('sensor.house_consumption_power') | float(default=0) %}
-# #           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(default=0) %}
-# #           {% set value = (powerload - laddbox_power) | round(1) %}
-# #           {{ value }}
-          
-#   - platform: template
-#     sensors:
-#       power_load_no_var_loads:
-#         friendly_name: "Power load no var loads"
-#         unit_of_measurement: "W"
-#         device_class: "power"
-#         unique_id: f8c3d9b2-7a4e-42d6-b9e1-3c8f1e5d67a1
-#         value_template: >
-#           {% set powerload = states('sensor.house_consumption_power') | float(0) %}
-#           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(0) %}
-#           {{ (powerload - laddbox_power) | round(1) }}
-          
-# #   - platform: rest
-# #     name: "EMHASS Model Fit R2"
-# #     resource: "http://localhost:5000/get/backtest-score"
-# #     value_template: "{{ value_json.r2_score }}"
-
-# ################################################################################
-# ## Fifobuffer CONFIG by Johan71
-# ################################################################################
-
-#   - platform: filter
-#     name: "1_minute_average"
-#     entity_id: sensor.power_load_no_var_loads
-#     filters:
-#       - filter: time_simple_moving_average
-#         window_size: "00:01"  # Calculates the average over each minute
-#         precision: 2
-        
-#   - platform: filter
-#     name: "15_minute_average"
-#     entity_id: sensor.1_minute_average
-#     filters:
-#       - filter: time_simple_moving_average
-#         window_size: "00:15"  # Calculates the average over 15 minutes
-#         precision: 2
-      
-#   - platform: filter
-#     name: "30_minute_average"
-#     entity_id: sensor.1_minute_average
-#     filters:
-#       - filter: time_simple_moving_average
-#         window_size: "00:30"  # Calculates the average over 30 minutes
-#         precision: 2
-        
-# #### Car charger sensors #########################################################
-
-#   # Percentage of charge that can be added up to a max of 90%, based on the Volvo integration
-#   - platform: template
-#     sensors:
-#       c40_additional_charge_percentage:
-#         unit_of_measurement: "%"
-#         device_class: power_factor
-#         value_template: >
-#           {% set current_charge = states('sensor.volvo_yv1xkefv1p2046163_battery_charge_level') | int(0) %}
-#           {% set max_charge = states('input_number.c40_max_charge_percentage') | int(90) %}
-#           {% if current_charge >= max_charge %}
-#             {{ 0 }}
-#           {% else %}
-#             {{ (max_charge - current_charge) }}
-#           {% endif %}
-
-#   # Multiplied by battery capacity of 67 kWh
-#   - platform: template
-#     sensors:
-#       c40_additional_charge_kwh:
-#         unit_of_measurement: "kWh"
-#         device_class: energy
-#         value_template: >
-#           {{ 67 * (states('sensor.c40_additional_charge_percentage') | int) / 100 }}
-
-#   # Charging with a max of 4 kWh
-#   - platform: template
-#     sensors:
-#       c40_additional_charge_hours:
-#         unit_of_measurement: "h"
-#         device_class: duration
-#         value_template: >
-#           {{ ((states('sensor.c40_additional_charge_kwh') | float) / 4.0) | round(0, "ceil", 0) }}
-
-#   # Check the Go-e charger if the car is connected, otherwise the number of hours is 0
-#   - platform: template
-#     sensors:
-#       c40_additional_charge_hours_if_connected:
-#         unit_of_measurement: "h"
-#         device_class: duration
-#         value_template: >
-#           {% set current_price = states('sensor.nordpool_tibber') | float(0) %}
-#           {% set max_price = states('input_number.max_ore_value') | float(100) %}
-#           {% set today_prices = state_attr('sensor.nordpool_tibber', 'today') | default([]) %}
-#           {% set tomorrow_prices = state_attr('sensor.nordpool_tibber', 'tomorrow') | default([]) %}
-        
-#           {# Combine today's and tomorrow's prices if tomorrow's prices are valid #}
-#           {% set all_prices = today_prices + (tomorrow_prices if state_attr('sensor.nordpool_tibber', 'tomorrow_valid') else []) %}
-        
-#           {# Extract prices for the next 10 hours #}
-#           {% set next_10_hours = all_prices[now().hour:now().hour + 10] %}
-        
-#           {# Check if there is a price lower than the max price within the next 10 hours #}
-#           {% set price_below_max = next_10_hours | select('lt', max_price) | list %}
-        
-#           {# If the current price is higher than max price and no lower prices exist, return 0 #}
-#           {% if current_price > max_price and price_below_max | length == 0 %}
-#             0
-#           {% else %}
-#             {{ (states('sensor.c40_additional_charge_hours') | int if states('binary_sensor.go_echarger_265216_car') in ("on", "ready_to_charge", "charging") else 0) }}
-#           {% endif %}
-
-#   # Calculate additional charge in watts
-#   - platform: template
-#     sensors:
-#       c40_additional_charge_watts:
-#         unit_of_measurement: "W"
-#         device_class: power
-#         value_template: >
-#           {{ min(4000, ((states('sensor.c40_additional_charge_kwh') | float) / 6.0) * 4000) | round(0, "ceil", 0) }}
-
-#       # Hours until next user-defined time, with switch to enable/disable use
-#   - name: hours_until_next_user_time
-#     friendly_name: "Hours Until Next User Time"
-#     unit_of_measurement: "h"
-#     device_class: duration
-#     state: >
-#       {% if is_state('input_boolean.use_klar_tid', 'on') %}
-#         {% set klar_tid = states('input_datetime.klar_tid') %}
-#         {% if klar_tid != 'unknown' and klar_tid != 'unavailable' %}
-#         {% set klar_hour = klar_tid.split(':')[0] | int %}
-#           {% set klar_minute = klar_tid.split(':')[1] | int %}
-#           {% set now_hour = now().hour %}
-#           {% set now_minute = now().minute %}
-#           {% if now_hour > klar_hour or (now_hour == klar_hour and now_minute >= klar_minute) %}
-#             {{ (24 - now_hour + klar_hour) - (0 if now_minute == klar_minute else 1) }}
-#           {% else %}
-#             {{ (klar_hour - now_hour) - (0 if now_minute == klar_minute else 1) }}
-#           {% endif %}
-#         {% else %}
-#           24
-#         {% endif %}
-#       {% else %}
-#          24
-#       {% endif %}
-
-# #   # Hours until next user-defined time
-# #   - platform: template
-# #     sensors:
-# #       hours_until_next_user_time:
-# #         friendly_name: "Hours Until Next User Time"
-# #         unit_of_measurement: "h"
-# #         device_class: duration
-# #         value_template: >
-# #           {% set klar_tid = states('input_datetime.klar_tid') %}
-# #           {% if klar_tid != 'unknown' and klar_tid != 'unavailable' %}
-# #             {% set klar_hour = klar_tid.split(':')[0] | int %}
-# #             {% set klar_minute = klar_tid.split(':')[1] | int %}
-# #             {% set now_hour = now().hour %}
-# #             {% set now_minute = now().minute %}
-# #             {% if now_hour > klar_hour or (now_hour == klar_hour and now_minute >= klar_minute) %}
-# #               {{ (24 - now_hour + klar_hour) - (0 if now_minute == klar_minute else 1) }}
-# #             {% else %}
-# #               {{ (klar_hour - now_hour) - (0 if now_minute == klar_minute else 1) }}
-# #             {% endif %}
-# #           {% else %}
-# #             unknown
-# #           {% endif %}
-
-# input_datetime:
-#   klar_tid:
-#     name: "Car Time Done"
-#     has_date: false
-#     has_time: true
-
-# input_number:
-#   c40_max_charge_percentage:
-#     name: "Max Charge Percentage"
-#     min: 0
-#     max: 100
-#     step: 1
-#     unit_of_measurement: "%"
-#     mode: slider
-#     icon: mdi:battery-charging
-
-#   max_ore_value:
-#     name: "Max Charge Cost"
-#     min: 0
-#     max: 4
-#     step: 0.10
-#     unit_of_measurement: "kr"
-#     mode: box  
-#     icon: mdi:currency-usd
-    
-# input_boolean:
-#   use_klar_tid:
-#     name: Använd Klar Tid
-#     icon: mdi:clock-outline
-    
-# #### weight_battery ############################################################
-
-#   weight_battery_discharge:
-#     name: "weight battery discharge"
-#     min: 0
-#     max: 5
-#     step: 0.01
-#     unit_of_measurement: "kr"
-#     mode: box  
-#     icon: mdi:currency-usd
-    
-#   weight_battery_charge:
-#     name: "weight battery charge"
-#     min: 0
-#     max: 5
-#     step: 0.01
-#     unit_of_measurement: "kr"
-#     mode: box  
-#     icon: mdi:currency-usd
-    
-#   soc_final:
-#     name: soc_final
-#     min: 2
-#     max: 100
-#     step: 1
-#     unit_of_measurement: "%"
-#     mode: slider  
-#     icon: mdi:battery-charging
-    
-
-# ################################################################################
-# # END
-# ################################################################################
+###################
