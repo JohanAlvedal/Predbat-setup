@@ -1,11 +1,11 @@
-# ################################################################################
-# #         -----------------------------------------------------                #
-# #         HUAWEI SOLAR DATA - Power, Energy and Economy Sensors                #
-# #         -----------------------------------------------------                #
-# #                                                                              #
-# # This is a package file with the sensors included in Huawei Solar by Johan71  #
-# #                                                                              #
-# ################################################################################
+################################################################################
+#         -----------------------------------------------------                #
+#         HUAWEI SOLAR DATA - Power, Energy and Economy Sensors                #
+#         -----------------------------------------------------                #
+#                                                                              #
+# This is a package file with the sensors included in Huawei Solar by Johan71  #
+#                                                                              #
+################################################################################
 
 sensor:
 
@@ -151,7 +151,7 @@ sensor:
             {{ house_power }}
           {% endif %}
         availability_template: >
-          {{ states('sensor.house_consumption_power') | is_number and states('sensor.inverter_input_power') | is_number }}
+          {{ states('sensor.house_consumption_power') | float(default=0) is not none and states('sensor.inverter_input_power') | float(default=0) is not none }}
 
       # Solar to grid
       solar_to_grid:
