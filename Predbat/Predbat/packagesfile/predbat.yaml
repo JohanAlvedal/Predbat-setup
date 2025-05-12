@@ -4,17 +4,19 @@
 #                                                                              #
 #                   Made By Johan71                                            #
 ################################################################################
+
 sensor:
   - platform: template
     sensors:
+
       pv_power:
         friendly_name: "PV Power kW"
         unit_of_measurement: "kW"
         unique_id: "pv_power"
         value_template: >
-          {% set watt = states('sensor.inverter_input_power') | float(0) %}
-          {% if states('sensor.inverter_input_power') not in ['unknown', 'unavailable', 'none'] %}
-            {{ watt / 1000 }}
+          {% set sensor_value = states('sensor.inverter_input_power') %}
+          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
+            {{ sensor_value | float(0) / 1000 }}
           {% else %}
             0
           {% endif %}
@@ -24,24 +26,24 @@ sensor:
         unit_of_measurement: "kWh"
         unique_id: "ev_today_kwh"
         value_template: >
-          {% set wh = states('sensor.go_echarger_265216_wh') | float(0) %}
-          {% if states('sensor.go_echarger_265216_wh') not in ['unknown', 'unavailable', 'none'] %}
-            {{ wh / 1000 }}
+          {% set sensor_value = states('sensor.go_echarger_265216_wh') %}
+          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
+            {{ sensor_value | float(0) / 1000 }}
           {% else %}
             0
           {% endif %}
-          
-## set your ev charger from Wh to kwh ##
+
       go_echarger_kwh:
         friendly_name: "Go-eCharger Energy kWh"
+        unit_of_measurement: "kWh"
+        unique_id: "go_echarger_kwh"
         value_template: >
-          {% set eto = states('sensor.go_echarger_265216_eto') | float(0) %}
-          {% if states('sensor.go_echarger_265216_eto') not in ['unknown', 'unavailable', 'none'] %}
-            {{ eto / 1000 }}
+          {% set eto = states('sensor.go_echarger_265216_eto') %}
+          {% if eto not in ['unknown', 'unavailable', 'none'] %}
+            {{ eto | float(0) / 1000 }}
           {% else %}
             0
           {% endif %}
-        unit_of_measurement: "kWh"
 
       battery_capacity_kw:
         friendly_name: "Battery State of Capacity in kW"
@@ -49,12 +51,16 @@ sensor:
         unique_id: "battery_capacity_kw"
         value_template: >
           {% set max_capacity_kw = 10 %}
-          {% set percentage = states('sensor.battery_state_of_capacity') | float(0) %}
-          {% if states('sensor.battery_state_of_capacity') not in ['unknown', 'unavailable', 'none'] %}
-            {{ (max_capacity_kw * percentage / 100) | round(2) }}
+          {% set soc = states('sensor.battery_state_of_capacity') %}
+          {% if soc not in ['unknown', 'unavailable', 'none'] %}
+            {{ (max_capacity_kw * soc | float(0) / 100) | round(2) }}
           {% else %}
             0
           {% endif %}
+
+  ##############################################################################
+  ## Integration sensors (power → energy)
+  ##############################################################################
 
   - platform: integration
     source: sensor.house_consumption_power
@@ -69,8 +75,11 @@ sensor:
     unit_prefix: k
     round: 2
     unique_id: "battery_to_house_energy"
-    
-## Daily sensors ##
+
+  ##############################################################################
+  ## Utility meters - Daily energy tracking
+  ##############################################################################
+
 utility_meter:
   import_today:
     source: sensor.power_meter_consumption
@@ -97,4 +106,6 @@ utility_meter:
     cycle: daily
     unique_id: "ev_today"
 
-#### END #############################################
+################################################################################
+# END
+################################################################################
