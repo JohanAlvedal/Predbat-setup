@@ -1,11 +1,11 @@
-# ################################################################################
-# #         -----------------------------------------------------                #
-# #         HUAWEI SOLAR DATA - Power, Energy and Economy Sensors                #
-# #         -----------------------------------------------------                #
-# #                                                                              #
-# # This is a package file with the sensors included in Huawei Solar by Johan71  #
-# #                                                                              #
-# ################################################################################
+################################################################################
+#         -----------------------------------------------------                #
+#         HUAWEI SOLAR DATA - Power, Energy and Economy Sensors                #
+#         -----------------------------------------------------                #
+#                                                                              #
+# This is a package file with the sensors included in Huawei Solar by Johan71  #
+#                                                                              #
+################################################################################
 
 sensor:
 
@@ -20,7 +20,6 @@ sensor:
 #### Separate battery sensors for charge/discharge
   - platform: template
     sensors:
-     
       # Sensor that reports the charging power of the battery
       battery_charge_only:
         friendly_name: "Battery Charge Only"
@@ -151,7 +150,7 @@ sensor:
             {{ house_power }}
           {% endif %}
         availability_template: >
-          {{ states('sensor.house_consumption_power') | is_number and states('sensor.inverter_input_power') | is_number }}
+          {{ states('sensor.house_consumption_power') | float(default=0) is not none and states('sensor.inverter_input_power') | float(default=0) is not none }}
 
       # Solar to grid
       solar_to_grid:
@@ -238,50 +237,6 @@ sensor:
         value_template: >
           {% set inv_power = states('sensor.inverter_input_power') | float(0) %}
           {{ max(0, inv_power) }}
-      
-    #   ########### SCHEDULED SoC (Battery State of Charge ) (EMHASS) ###########
-    #   soc_scheduled_value:
-    #     friendly_name: "SoC Scheduled"
-    #     unique_id: soc_scheduled_value
-    #     unit_of_measurement: "%"
-    #     device_class: "battery"
-    #     value_template: >
-    #       {% set battery_scheduled_soc = state_attr('sensor.soc_batt_forecast', 'battery_scheduled_soc') %}
-    #       {% if battery_scheduled_soc is not none and battery_scheduled_soc|length > 0 %}
-    #         {{ battery_scheduled_soc[0] }}
-    #       {% else %}
-    #         0
-    #       {% endif %}
-
-### Automation 1: Do not feed to grid when power price becomes negative ###
-# automation:
-#   - alias: "Do not feed to grid when power price becomes negative"
-#     description: "Do not feed to grid when power price becomes negative"
-#     mode: single
-#     trigger:
-#       - platform: numeric_state
-#         entity_id: sensor.nordpool_tibber
-#         below: 0
-#     action:
-#       - service: huawei_solar.set_maximum_feed_grid_power_percent
-#         data:
-#           power_percentage: 0
-#           # Use the visual editor to select the correct 'Inverter' device from the list. HA will then set the correct `device_id` for you.
-#           device_id: 877400bca09c5e673ff27b201c71d371
-
-# ### Automation 2: Allow inverter to export electricity to grid when price becomes positive ###
-#   - alias: "Allow inverter to export electricity to grid when price becomes positive"
-#     description: "Allow inverter to export electricity to grid when price becomes positive"
-#     mode: single
-#     trigger:
-#       - platform: numeric_state
-#         entity_id: sensor.nordpool_tibber
-#         above: 0
-#     condition: []
-#     action:
-#       - service: huawei_solar.reset_maximum_feed_grid_power
-#         data:
-#           device_id: 877400bca09c5e673ff27b201c71d371
 
 ################################################################################
 #  END OF PACKAGE FILE                                  
