@@ -1,7 +1,7 @@
-################################################################################
+###############################################################################
 ## EMHASS CONFIG by Johan71
-################################################################################
-#### Do not remove; consider potential consequences.
+###############################################################################
+## Do not remove; consider potential consequences.
 sensor:
   - platform: template
     sensors:
@@ -16,7 +16,9 @@ sensor:
           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(0) %}
           {{ (powerload - laddbox_power) | round(1) }}
 
-#### Car charger sensors #######################################################
+##  Fi_fo_buffer
+
+## Car charger sensors #######################################################
 
       c40_additional_charge_percentage:
         unit_of_measurement: "%"
@@ -176,15 +178,27 @@ input_number:
 
   soc_final:
     name: soc_final
-    min: 2
-    max: 100
+    min: 0
+    max: 60
     step: 1
     unit_of_measurement: "%"
-    mode: slider
+    mode: box
     icon: mdi:battery-charging
 
 input_boolean:
   use_klar_tid:
     name: Använd Klar Tid
     icon: mdi:clock-outline
-###################
+    
+  emhass_notify:
+    name: EMHASS Notify
+    icon: mdi:cellphone-arrow-down
+    
+input_text:
+  fi_fo_buffer:
+    name: Fi fo buffer
+    max: 256
+
+################################################################################
+##      END
+################################################################################
