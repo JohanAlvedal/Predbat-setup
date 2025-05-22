@@ -1,5 +1,0 @@
-{%- set third_row = state_attr('sensor.soc_batt_forecast', 'battery_scheduled_soc')[0] -%}
-{%- set soc_value = third_row['soc_batt_forecast']|float(0) -%}
-{%- set raw_power = ((states('sensor.battery_state_of_capacity')|float(0) - soc_value) / 100 * 10000 / 0.5 / 0.9)|round(0) -%}
-{%- set limited_power = min(max(raw_power, -4500), 5000) -%}
-{{ limited_power }}
