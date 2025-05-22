@@ -16,10 +16,7 @@ sensor:
           {% set laddbox_power = states('sensor.go_echarger_265216_nrg_12') | float(0) %}
           {{ (powerload - laddbox_power) | round(1) }}
 
-##  Fi_fo_buffer
-
-## Car charger sensors #######################################################
-
+## Car charger sensors 
       c40_additional_charge_percentage:
         unit_of_measurement: "%"
         device_class: power_factor
@@ -109,6 +106,7 @@ sensor:
             0
           {% endif %}
 
+## Filter for fifobuffer
   - platform: filter
     name: "1_minute_average"
     entity_id: sensor.power_load_no_var_loads
@@ -133,6 +131,76 @@ sensor:
         window_size: "00:30"
         precision: 0
 
+## Limited Power
+#   - platform: template
+#     sensors:
+#       limited_power:
+#         friendly_name: "Limited Power"
+#         unit_of_measurement: "W"
+#         value_template: >
+#           {%- set battery_soc = state_attr('sensor.soc_batt_forecast', 'battery_scheduled_soc') or [] -%}
+#           {%- set third_row = battery_soc[0] if battery_soc|length > 0 else {} -%}
+#           {%- set soc_value = third_row.get('soc_batt_forecast', 0) | float -%}
+#           {%- set raw_power = ((states('sensor.battery_state_of_capacity')|float(0) - soc_value) / 100 * 10000 / 0.5 / 0.9) | round(0) -%}
+#           {%- set limited_power = min(max(raw_power, -4700), 5000) -%}
+#           {{ limited_power }}
+
+## Battery Mode
+#   - platform: template
+#     sensors:
+#       battery_control_mode:
+#         friendly_name: "Battery Control Mode"
+#         value_template: >
+#           {% set p_batt = states('sensor.p_batt_forecast') %}
+#           {% set p_grid = states('sensor.p_grid_forecast') %}
+#           {% set soc = states('sensor.battery_state_of_capacity') | float(0) %}
+
+#           {% if p_batt == 'unavailable' or p_grid == 'unavailable' %}
+#             Unknown
+#           {% else %}
+#             {% set p_batt = p_batt | float(0) %}
+#             {% set p_grid = p_grid | float(0) %}
+
+#             {% if p_batt == 0 %}
+#               Idle
+#             {% elif p_grid == 0 %}
+#               Follow Grid
+#             {% elif p_batt < 0 %}
+#               {% if soc >= 99 %}
+#                 Idle
+#               {% else %}
+#                 Forcible Charge
+#               {% endif %}
+#             {% elif p_batt > 0 %}
+#               {% if soc <= 6 %}
+#                 Idle
+#               {% else %}
+#                 Forcible Discharge
+#               {% endif %}
+#             {% else %}
+#               Unknown
+#             {% endif %}
+#           {% endif %}
+
+## Load Forecast
+  - platform: template
+    sensors:
+      load_forecast_kw:
+        friendly_name: "Load Forecast (kW)"
+        unit_of_measurement: "kW"
+        value_template: >
+          {{ (states('sensor.p_load_forecast') | float(0) / 1000) }}
+          
+## Nordpool Price Inverted. ( Energi Data Service - Negative )
+  - platform: template
+    sensors:
+      nordpool_price_inverted:
+        friendly_name: "Nordpool Price Inverted"
+        unit_of_measurement: "SEK/kWh"
+        value_template: >
+          {{ states('sensor.nordpool_kwh_se3_sek_3_10_025') | float(0) * (-1) }}
+
+## Car charger sensors 
 input_datetime:
   klar_tid:
     name: "Car Time Done"
@@ -189,11 +257,13 @@ input_boolean:
   use_klar_tid:
     name: Använd Klar Tid
     icon: mdi:clock-outline
-    
+
+## Emhass notify wwhen batterymode changes   
   emhass_notify:
     name: EMHASS Notify
     icon: mdi:cellphone-arrow-down
-    
+
+## Fifobuffer textfile
 input_text:
   fi_fo_buffer:
     name: Fi fo buffer
