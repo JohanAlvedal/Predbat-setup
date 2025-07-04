@@ -1,11 +1,10 @@
-# **Welcome to My EMHASS and Predbat Setup**  
+# **Welcome to My Predbat Setup**  
 
 ## **Overview**  
-This project optimizes energy consumption in my smart home using two powerful tools:  
-- **[EMHASS (Energy Management for Home Assistant)](https://github.com/davidusb-geek/emhass)**  
+This project optimizes energy consumption in my smart home using this powerful tool:    
 - **[Predbat (Home Battery Prediction)](https://github.com/springfall2008/predbat)**  
 
-These tools integrate with **[Home Assistant](https://www.home-assistant.io/)** to reduce energy costs and maximize the efficiency of my 10kW home battery.  
+This tool integrate with **[Home Assistant](https://www.home-assistant.io/)** to reduce energy costs and maximize the efficiency of my 10kW home battery.  
 
 ---
 
@@ -20,7 +19,6 @@ These tools integrate with **[Home Assistant](https://www.home-assistant.io/)** 
 
 ## **Explore More**  
 Configurations and examples for each component are available in their respective folders:  
-- **EMHASS**  
 - **Predbat**
 
 ---
@@ -32,7 +30,6 @@ I am not an expert in programming, energy management, or automation. This setup 
 
 ## **Acknowledgments**  
 Thanks to:  
-- **[davidusb-geek](https://github.com/davidusb-geek)** for creating EMHASS.  
 - **[springfall2008](https://github.com/springfall2008)** for creating Predbat.  
 - The **[Home Assistant Community](https://community.home-assistant.io/)** for their invaluable resources.  
 - **[Tibber](https://www.tibber.com/)** for energy data and insights.  
