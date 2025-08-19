@@ -1,0 +1,11 @@
+alias: Huawei Solar STOP FCFDC Hold charging
+description: Ställer in batteriet i Hold Charging-läge för att hålla laddningsnivån stabil.
+sequence:
+  - service: huawei_solar.stop_forcible_charge
+    data:
+      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+  - delay:
+      seconds: 3
+  - service: script.huawei_discharging_power_0w
+  - service: script.huawei_charging_power_5000w
+mode: single
