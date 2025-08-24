@@ -4,11 +4,9 @@
 #                                                                              #
 #                   Made By Johan71                                            #
 ################################################################################
-
 sensor:
   - platform: template
     sensors:
-
       pv_power:
         friendly_name: "PV Power kW"
         unit_of_measurement: "kW"
@@ -19,6 +17,17 @@ sensor:
             {{ sensor_value | float(0) / 1000 }}
           {% else %}
             0
+          {% endif %}
+          
+      pv_today2:
+        friendly_name: "PV Today kWh"
+        unit_of_measurement: "kWh"
+        value_template: >
+          {% set sensor_value = states('sensor.inverter_daily_yield') %}
+          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
+          {{ sensor_value | float(0) }}
+          {% else %}
+           0
           {% endif %}
 
       ev_today_kwh:
@@ -105,7 +114,6 @@ utility_meter:
     source: sensor.go_echarger_265216_wh
     cycle: daily
     unique_id: "ev_today"
-
-################################################################################
-# END
-################################################################################
+###############################################################################
+##     END
+###############################################################################
