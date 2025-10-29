@@ -1,10 +1,12 @@
-alias: Huawei Discharging power 0W
-description: Sätter batteriets maximala urladdningskraft till 0W.
+alias: Huawei Discharging Power Off
+description: >-
+  Sets the battery's maximum discharging power to 0W if it's currently not zero.
+  This helps to prevent power discharge when not needed.
 icon: mdi:battery-off
 mode: single
 sequence:
   - condition: template
-    value_template: "{{ states('number.battery_maximum_discharging_power') | int(0) != 0 }}"
+    value_template: "{{ states(\"number.battery_maximum_discharging_power\") | int(0) != 0 }}"
   - action: number.set_value
     target:
       entity_id: number.battery_maximum_discharging_power
