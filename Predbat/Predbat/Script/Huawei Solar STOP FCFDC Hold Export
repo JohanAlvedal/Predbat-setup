@@ -1,41 +1,12 @@
+alias: Huawei Charging Power 5000W
+icon: mdi:battery-charging-100
+mode: single
 sequence:
-  - if:
-      - condition: state
-        entity_id: sensor.batteries_forcible_charge
-        state: Stopped
-    then:
-      - action: script.huawei_discharging_power_0w
-        metadata: {}
-        data: {}
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 3
-          milliseconds: 0
-      - action: script.huawei_charging_power_5000w
-        metadata: {}
-        data: {}
-        enabled: true
-    else:
-      - action: huawei_solar.stop_forcible_charge
-        data:
-          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 3
-          milliseconds: 0
-      - action: script.huawei_discharging_power_0w
-        metadata: {}
-        data: {}
-      - delay:
-          hours: 0
-          minutes: 0
-          seconds: 3
-          milliseconds: 0
-      - action: script.huawei_charging_power_5000w
-        metadata: {}
-        data: {}
-        enabled: true
-alias: Huawei Solar STOP FCFDC Hold Export
-description: ""
+  - condition: template
+    value_template: "{{ states(\"number.battery_maximum_charging_power\") | int(0) != 5000 }}"
+  - action: number.set_value
+    target:
+      entity_id: number.battery_maximum_charging_power
+    data:
+      value: 5000
+description: Set the maximum charging power of the battery to 5000W if needed.
