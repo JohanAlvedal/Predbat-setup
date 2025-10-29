@@ -1,9 +1,0 @@
-sequence:
-  - action: huawei_solar.forcible_charge
-    metadata: {}
-    data:
-      duration: 120
-      power: "5000"
-      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-alias: " Huawei Forcible Charge 120min 5000W"
-description: ""
