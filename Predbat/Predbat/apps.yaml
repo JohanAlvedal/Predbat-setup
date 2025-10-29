@@ -97,7 +97,7 @@ pred_bat:
   # discharge_stop_service: huawei_solar/stop_forcible_charge
 
   # Device ID (a string, not a list)
-#   device_id: "b0755819f33230378297984b8a08c663"
+#   device_id: "b0xxxxxxxxxxxxxxxxxxxxxx3"
 
   # Limits (W)
   inverter_limit:
