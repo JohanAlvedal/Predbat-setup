@@ -1,0 +1,14 @@
+sequence:
+  - condition: template
+    value_template: "{{ states(\"number.battery_maximum_charging_power\") | int(0) != 5000 }}"
+  - action: number.set_value
+    target:
+      entity_id: number.battery_maximum_discharging_power
+    data:
+      value: 5000
+alias: Huawei Discharging Power 5000W Adjust
+icon: mdi:battery-charging-100
+mode: single
+description: >-
+  Set the maximum discharging power of the battery to 5000W if it is not already
+  set to that value.
