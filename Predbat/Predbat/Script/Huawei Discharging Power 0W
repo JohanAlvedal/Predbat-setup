@@ -1,4 +1,4 @@
-alias: Huawei Discharging Power Off
+alias: Huawei Discharging Power 0W
 description: >-
   Sets the battery's maximum discharging power to 0W if it's currently not zero.
   This helps to prevent power discharge when not needed.
