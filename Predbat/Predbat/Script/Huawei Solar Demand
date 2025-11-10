@@ -1,0 +1,42 @@
+alias: Huawei Solar Demand
+description: >-
+  Restores the demand settings for the solar system by stopping forced charging
+  and setting both charging and discharging to 5000W.
+mode: single
+sequence:
+  - if:
+      - condition: not
+        conditions:
+          - condition: template
+            value_template: |
+              {{ states('sensor.batteries_forcible_charge') != ['Stopped'] }}
+    then:
+      - data:
+          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+        action: huawei_solar.stop_forcible_charge
+  - if:
+      - condition: template
+        value_template: >-
+          {% set v = states('number.battery_maximum_charging_power') %} {{ v not
+          in ['unknown','unavailable'] and (v | int) != 5000 }}
+    then:
+      - delay:
+          seconds: 5
+      - target:
+          entity_id: number.battery_maximum_charging_power
+        data:
+          value: 5000
+        action: number.set_value
+  - if:
+      - condition: template
+        value_template: >-
+          {% set v = states('number.battery_maximum_discharging_power') %} {{ v
+          not in ['unknown','unavailable'] and (v | int) != 5000 }}
+    then:
+      - delay:
+          seconds: 10
+      - target:
+          entity_id: number.battery_maximum_discharging_power
+        data:
+          value: 5000
+        action: number.set_value
