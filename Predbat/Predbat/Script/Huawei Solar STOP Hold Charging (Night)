@@ -1,0 +1,52 @@
+sequence:
+  - alias: Huawei Solar STOP Hold Charging (Night)
+    if:
+      - condition: template
+        value_template: "{{ states('sensor.batteries_forcible_charge') not in ['Stopped'] }}"
+    then:
+      - data:
+          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+        action: huawei_solar.stop_forcible_charge
+  - alias: Charging
+    if:
+      - condition: template
+        value_template: >-
+          {{ states('sensor.battery_state_of_capacity') | float(0) <=
+          states('predbat.best_charge_limit') | float(0) }}
+    then:
+      - delay:
+          seconds: 10
+      - if:
+          - condition: template
+            value_template: >-
+              {% set v = states('number.battery_maximum_charging_power') %} {{ v
+              not in ['unknown','unavailable'] and (v | int) != 5000 }}
+        then:
+          - target:
+              entity_id: number.battery_maximum_charging_power
+            data:
+              value: "5000"
+            action: number.set_value
+    enabled: false
+  - alias: Discharge 0w
+    choose:
+      - conditions:
+          - condition: template
+            value_template: >-
+              {% set v = states('number.battery_maximum_discharging_power') %}
+              {{ v not in ['unknown','unavailable'] and (v | int) != 0 }}
+        sequence:
+          - delay:
+              seconds: 10
+          - target:
+              entity_id: number.battery_maximum_discharging_power
+            data:
+              value: "0"
+            action: number.set_value
+        alias: Discharging
+    enabled: true
+alias: Huawei Solar STOP Hold Charging (Night)
+description: >-
+  Manages solar charging and discharging based on battery conditions. Adjusts
+  maximum charging and discharging power to ensure optimal performance.
+mode: single
