@@ -1,0 +1,44 @@
+alias: Huawei Solar STOP Power 0W
+description: Stops forcible charging and sets both discharging & charging to 0W.
+mode: single
+sequence:
+  - if:
+      - condition: not
+        conditions:
+          - condition: template
+            value_template: >
+              {{ states('sensor.batteries_forcible_charge') not in ['Stopped',
+              'Idle'] }}
+    then:
+      - data:
+          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+        action: huawei_solar.stop_forcible_charge
+  - if:
+      - condition: template
+        value_template: >-
+          {% set v = states('number.battery_maximum_charging_power') %} {{ v not
+          in ['unknown','unavailable'] and (v | int) != 0 }}
+    then:
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 5
+          milliseconds: 0
+      - target:
+          entity_id: number.battery_maximum_charging_power
+        data:
+          value: 0
+        action: number.set_value
+  - if:
+      - condition: template
+        value_template: >-
+          {% set v = states('number.battery_maximum_discharging_power') %} {{ v
+          not in ['unknown','unavailable'] and (v | int) != 0 }}
+    then:
+      - delay:
+          seconds: 5
+      - target:
+          entity_id: number.battery_maximum_discharging_power
+        data:
+          value: 0
+        action: number.set_value
