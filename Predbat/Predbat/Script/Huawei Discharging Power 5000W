@@ -6,9 +6,7 @@ sequence:
       entity_id: number.battery_maximum_discharging_power
     data:
       value: 5000
-alias: Huawei Discharging Power 5000W Adjust
+alias: Huawei Discharging power 5000W
 icon: mdi:battery-charging-100
 mode: single
-description: >-
-  Set the maximum discharging power of the battery to 5000W if it is not already
-  set to that value.
+description: Set the maximum discharging power of the battery to 5000W if needed.
