@@ -1,128 +1,421 @@
-################################################################################
-#                   Various predbat sensors                                    #
-#                       Made By Johan71                                        #
-################################################################################
-sensor:
-  - platform: template
-    sensors:
-      pv_power:
-        friendly_name: "PV Power kW"
-        unit_of_measurement: "kW"
-        unique_id: "pv_power"
+alias: Predbat Charging and Discharging Control
+description: >
+  This automation manages the charging and discharging of the predbat system
+  based on its status and battery level. It adjusts charging times between
+  06:00-23:30 and 23:30-06:00, ensuring optimal power management based on
+  various conditions and states.
+triggers:
+  - entity_id: binary_sensor.predbat_exporting
+    id: Predbat_export_on
+    trigger: state
+    to: "on"
+    for: "00:00:10"
+  - entity_id: binary_sensor.predbat_exporting
+    id: Predbat_export_off
+    trigger: state
+    to: "off"
+    for: "00:00:10"
+  - entity_id:
+      - binary_sensor.predbat_charging
+    id: Predbat_charging_on
+    trigger: state
+    to: "on"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  - trigger: state
+    entity_id:
+      - predbat.best_charge_limit
+    id: charge limit changes
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  - entity_id:
+      - predbat.status
+    id: Status changes
+    trigger: state
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  - trigger: time_pattern
+    minutes: /10
+    enabled: true
+  - trigger: state
+    entity_id: binary_sensor.predbat_car_charging_slot
+    for: "00:00:05"
+    id: Predbat car charging slot
+conditions:
+  - condition: state
+    entity_id: switch.predbat_set_read_only
+    state: "off"
+actions:
+  - alias: Charge, Export
+    choose:
+      - conditions:
+          - condition: state
+            entity_id: binary_sensor.predbat_charging
+            state: "on"
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: predbat.status
+                state: Charging
+              - condition: state
+                entity_id: predbat.status
+                state: Charging, Hold for car
+        sequence:
+          - alias: 06:00-23:30 Charge
+            if:
+              - condition: time
+                after: "06:00:00"
+                before: "23:30:00"
+              - condition: numeric_state
+                entity_id: sensor.battery_state_of_capacity
+                above: 0
+                below: 95
+              - condition: template
+                value_template: |
+                  {{ (states('sensor.battery_state_of_capacity')|float(0))
+                     < ((states('predbat.best_charge_limit')|float(0)) - 5) }}
+                enabled: true
+            then:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.predbat_car_charging_slot
+                        state: "on"
+                    sequence:
+                      - alias: Huawei Charging Power 2500W
+                        choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_charging_power")
+                                  | int(0) != 2500 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_charging_power
+                                data:
+                                  value: 2500
+                      - delay: "00:00:10"
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_discharging_power")
+                                  | int(0) != 0 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_discharging_power
+                                data:
+                                  value: "0"
+                        alias: Huawei Discharging Power 0W
+                      - delay: "00:00:10"
+                      - action: huawei_solar.forcible_charge_soc
+                        data:
+                          target_soc: >
+                            {% set v =
+                            states('predbat.best_charge_limit')|int(0) %} {{ v
+                            if v >= 12 else 12 }}
+                          power: "2500"
+                          device_id: "{{ huawei_device_id }}"
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.predbat_car_charging_slot
+                        state: "off"
+                    sequence:
+                      - alias: Huawei Charging Power 4500W
+                        choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_charging_power")
+                                  | int(0) != 4500 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_charging_power
+                                data:
+                                  value: "4500"
+                      - delay: "00:00:10"
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_discharging_power")
+                                  | int(0) != 0 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_discharging_power
+                                data:
+                                  value: "0"
+                        alias: Huawei Discharging Power 0W
+                      - delay: "00:00:10"
+                      - condition: template
+                        value_template: |
+                          {{ (as_timestamp(now()) -
+                              as_timestamp(state_attr('automation.predbat_total','last_triggered')|default(0))) > 15 }}
+                        enabled: true
+                      - action: huawei_solar.forcible_charge_soc
+                        data:
+                          target_soc: >
+                            {% set v =
+                            states('predbat.best_charge_limit')|int(0) %} {{ v
+                            if v >= 12 else 12 }}
+                          power: "4500"
+                          device_id: "{{ huawei_device_id }}"
+            else:
+              - condition: template
+                value_template: >-
+                  {{ states("number.battery_maximum_discharging_power") | int(0)
+                  != 0 }}
+              - action: number.set_value
+                target:
+                  entity_id: number.battery_maximum_discharging_power
+                data:
+                  value: "0"
+          - alias: 23:30-06:00 Charge
+            if:
+              - condition: time
+                after: "23:30:00"
+                before: "06:00:00"
+              - condition: numeric_state
+                entity_id: sensor.battery_state_of_capacity
+                above: 0
+                below: 95
+              - condition: template
+                value_template: |
+                  {{ (states('sensor.battery_state_of_capacity')|float(0))
+                     < ((states('predbat.best_charge_limit')|float(0)) - 5) }}
+            then:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.predbat_car_charging_slot
+                        state: "on"
+                    sequence:
+                      - condition: template
+                        value_template: |
+                          {{ (as_timestamp(now()) -
+                              as_timestamp(state_attr('automation.predbat_total','last_triggered')|default(0))) > 10 }}
+                      - action: huawei_solar.forcible_charge_soc
+                        data:
+                          target_soc: >
+                            {% set v =
+                            states('predbat.best_charge_limit')|int(0) %} {{ v
+                            if v >= 12 else 12 }}
+                          power: "2500"
+                          device_id: "{{ huawei_device_id }}"
+                      - delay: "00:00:10"
+                      - action: script.huawei_charging_power_2500
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.predbat_car_charging_slot
+                        state: "off"
+                    sequence:
+                      - action: script.huawei_discharging_power_0w
+                      - delay: "00:00:10"
+                      - action: script.huawei_charging_power_5000w
+                      - delay: "00:00:10"
+                      - condition: template
+                        value_template: |
+                          {{ (as_timestamp(now()) -
+                              as_timestamp(state_attr('automation.predbat_total','last_triggered')|default(0))) > 20 }}
+                      - action: huawei_solar.forcible_charge_soc
+                        data:
+                          target_soc: >
+                            {% set v =
+                            states('predbat.best_charge_limit')|int(0) %} {{ v
+                            if v >= 12 else 12 }}
+                          power: 5000
+                          device_id: "{{ huawei_device_id }}"
+            else:
+              - condition: template
+                value_template: >-
+                  {{ states("number.battery_maximum_discharging_power") | int(0)
+                  != 0 }}
+              - action: number.set_value
+                target:
+                  entity_id: number.battery_maximum_discharging_power
+                data:
+                  value: "0"
+        alias: Charge
+      - conditions:
+          - condition: trigger
+            id:
+              - Predbat_export_on
+              - Predbat_export_off
+          - condition: state
+            entity_id: binary_sensor.predbat_charging
+            state: "off"
+          - condition: state
+            entity_id: binary_sensor.predbat_exporting
+            state: "on"
+        sequence:
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ states("number.battery_maximum_charging_power") | int(0) !=
+                  5000 }}
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: number.battery_maximum_discharging_power
+                data:
+                  value: 5000
+            alias: battery_maximum_discharging_power-5000
+          - delay: "00:00:10"
+          - condition: template
+            value_template: |
+              {{ states('select.battery_working_mode') != 'fully_fed_to_grid' }}
+          - action: select.select_option
+            data:
+              option: fully_fed_to_grid
+            target:
+              entity_id: select.battery_working_mode
+        alias: Export
+  - alias: STOP, Freeze, Hold, Demand
+    choose:
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: predbat.status
+                state: Hold for car
+              - condition: state
+                entity_id: predbat.status
+                state: Charging, Hold for car
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ states("number.battery_maximum_discharging_power") |
+                      int(0) != 0 }}
+                sequence:
+                  - action: number.set_value
+                    target:
+                      entity_id: number.battery_maximum_discharging_power
+                    data:
+                      value: "0"
+            alias: Huawei Discharging Power 0W
+        alias: Hold for car. Charging, Hold for car
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: predbat.status
+                state: Hold exporting
+              - condition: state
+                entity_id: predbat.status
+                state: Freeze exporting
+        sequence:
+          - action: script.huawei_solar_stop_fcfdc_power_0w_export_5000w_import
+        alias: Hold exporting
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: predbat.status
+                state: Hold charging
+              - condition: state
+                entity_id: predbat.status
+                state: Freeze charging
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: sun
+                    before: sunset
+                    after: sunrise
+                    after_offset: "2"
+                    before_offset: "-2"
+                sequence:
+                  - action: >-
+                      script.huawei_solar_stop_fcfdc_power_5000w_export_0w_import
+                    data: {}
+              - conditions:
+                  - condition: sun
+                    before: sunrise
+                    after: sunset
+                    before_offset: "2"
+                    after_offset: "-2"
+                  - condition: numeric_state
+                    entity_id: sensor.inverter_input_power
+                    below: 150
+                sequence:
+                  - action: script.huawei_solar_stop_hold_charging_night
+                    data: {}
+        alias: Hold Charging
+      - conditions:
+          - condition: state
+            entity_id: predbat.status
+            state: Demand
+        sequence:
+          - action: script.huawei_solar_stop_fcfdc_power_5000w
+            data: {}
+  - alias: Export off select max self
+    if:
+      - condition: trigger
+        id: Predbat_export_off
+      - condition: template
         value_template: >
-          {% set sensor_value = states('sensor.inverter_input_power') %}
-          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
-            {{ sensor_value | float(0) / 1000 }}
-          {% else %}
-            0
-          {% endif %}
-          
-      pv_today2:
-        friendly_name: "PV Today kWh"
-        unit_of_measurement: "kWh"
-        value_template: >
-          {% set sensor_value = states('sensor.inverter_daily_yield') %}
-          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
-          {{ sensor_value | float(0) }}
-          {% else %}
-           0
-          {% endif %}
-
-      ev_today_kwh:
-        friendly_name: "EV Today kWh"
-        unit_of_measurement: "kWh"
-        unique_id: "ev_today_kwh"
-        value_template: >
-          {% set sensor_value = states('sensor.go_echarger_265216_wh') %}
-          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
-            {{ sensor_value | float(0) / 1000 }}
-          {% else %}
-            0
-          {% endif %}
-
-      go_echarger_kwh:
-        friendly_name: "Go-eCharger Energy kWh"
-        unit_of_measurement: "kWh"
-        unique_id: "go_echarger_kwh"
-        value_template: >
-          {% set eto = states('sensor.go_echarger_265216_eto') %}
-          {% if eto not in ['unknown', 'unavailable', 'none'] %}
-            {{ eto | float(0) / 1000 }}
-          {% else %}
-            0
-          {% endif %}
-
-      battery_capacity_kw:
-        friendly_name: "Battery State of Capacity in kW"
-        unit_of_measurement: "kW"
-        unique_id: "battery_capacity_kw"
-        value_template: >
-          {% set max_capacity_kw = 10 %}
-          {% set soc = states('sensor.battery_state_of_capacity') %}
-          {% if soc not in ['unknown', 'unavailable', 'none'] %}
-            {{ (max_capacity_kw * soc | float(0) / 100) | round(2) }}
-          {% else %}
-            0
-          {% endif %}
-
-##############################################################################
-## Integration sensors (power → energy)
-##############################################################################
-
-  - platform: integration
-    source: sensor.house_consumption_power
-    name: "House Consumption - Energy"
-    unit_prefix: k
-    round: 2
-    unique_id: "house_consumption_energy"
-
-  - platform: integration
-    source: sensor.battery_to_house
-    name: "Battery to House Energy"
-    unit_prefix: k
-    round: 2
-    unique_id: "battery_to_house_energy"
-
-##############################################################################
-## Utility meters - Daily energy tracking
-##############################################################################
-
-utility_meter:
-  import_today:
-    source: sensor.power_meter_consumption
-    cycle: daily
-    unique_id: "import_today"
-
-  export_today:
-    source: sensor.power_meter_exported
-    cycle: daily
-    unique_id: "export_today"
-
-  pv_today:
-    source: sensor.solar_energy_riemann
-    cycle: daily
-    unique_id: "pv_today"
-
-  load_today:
-    source: sensor.house_consumption_energy
-    cycle: daily
-    unique_id: "load_today"
-
-  ev_today:
-    source: sensor.go_echarger_265216_wh
-    cycle: daily
-    unique_id: "ev_today"
-##############################################################################
-## Input text
-##############################################################################
-    
-input_text:
-  huawei_capacity_charge_periods:
-    name: Huawei capacity charge periods
-    max: 255
-  huawei_capacity_export_periods:
-    name: Huawei capacity export periods
-    max: 255
-###############################################################################
-##     END
-###############################################################################
+          {{ states('select.battery_working_mode') !=
+          'maximise_self_consumption' }}
+    then:
+      - action: select.select_option
+        data:
+          option: maximise_self_consumption
+        target:
+          entity_id: select.battery_working_mode
+  - alias: Car charging on off
+    choose:
+      - conditions:
+          - condition: trigger
+            id: Predbat car charging slot
+          - condition: state
+            entity_id: binary_sensor.predbat_car_charging_slot
+            state: "on"
+          - condition: and
+            conditions:
+              - condition: template
+                value_template: "{{ now().month >= 8 or now().month <= 3 }}"
+              - condition: time
+                after: "22:00:00"
+                before: "06:00:00"
+                weekday:
+                  - mon
+                  - tue
+                  - wed
+                  - thu
+                  - fri
+                enabled: true
+            enabled: false
+        sequence:
+          - action: button.press
+            target:
+              entity_id: button.go_echarger_265216_frc_3
+            data: {}
+      - conditions:
+          - condition: trigger
+            id: Predbat car charging slot
+          - condition: state
+            entity_id: binary_sensor.predbat_car_charging_slot
+            state: "off"
+        sequence:
+          - action: button.press
+            target:
+              entity_id: button.go_echarger_265216_frc_2
+            data: {}
+variables:
+  huawei_device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+mode: restart
