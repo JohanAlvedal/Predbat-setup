@@ -88,14 +88,35 @@ actions:
                         entity_id: binary_sensor.predbat_car_charging_slot
                         state: "on"
                     sequence:
-                      - action: script.huawei_charging_power_2500
+                      - alias: Huawei Charging Power 2500W
+                        choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_charging_power")
+                                  | int(0) != 2500 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_charging_power
+                                data:
+                                  value: 2500
                       - delay: "00:00:10"
-                      - action: script.huawei_discharging_power_0w
-                      - condition: template
-                        value_template: |
-                          {{ (as_timestamp(now()) -
-                              as_timestamp(state_attr('automation.predbat_total','last_triggered')|default(0))) > 20 }}
-                        enabled: false
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_discharging_power")
+                                  | int(0) != 0 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_discharging_power
+                                data:
+                                  value: "0"
+                        alias: Huawei Discharging Power 0W
                       - delay: "00:00:10"
                       - action: huawei_solar.forcible_charge_soc
                         data:
@@ -110,11 +131,35 @@ actions:
                         entity_id: binary_sensor.predbat_car_charging_slot
                         state: "off"
                     sequence:
-                      - action: script.huawei_charging_power_4500w
-                        data: {}
+                      - alias: Huawei Charging Power 4500W
+                        choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_charging_power")
+                                  | int(0) != 4500 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_charging_power
+                                data:
+                                  value: "4500"
                       - delay: "00:00:10"
-                      - action: script.huawei_discharging_power_0w
-                        data: {}
+                      - choose:
+                          - conditions:
+                              - condition: template
+                                value_template: >-
+                                  {{
+                                  states("number.battery_maximum_discharging_power")
+                                  | int(0) != 0 }}
+                            sequence:
+                              - action: number.set_value
+                                target:
+                                  entity_id: number.battery_maximum_discharging_power
+                                data:
+                                  value: "0"
+                        alias: Huawei Discharging Power 0W
                       - delay: "00:00:10"
                       - condition: template
                         value_template: |
@@ -130,9 +175,6 @@ actions:
                           power: "4500"
                           device_id: "{{ huawei_device_id }}"
             else:
-              - action: script.huawei_discharging_power_0w
-                data: {}
-                enabled: false
               - condition: template
                 value_template: >-
                   {{ states("number.battery_maximum_discharging_power") | int(0)
@@ -198,8 +240,15 @@ actions:
                           power: 5000
                           device_id: "{{ huawei_device_id }}"
             else:
-              - action: script.huawei_discharging_power_0w
-                data: {}
+              - condition: template
+                value_template: >-
+                  {{ states("number.battery_maximum_discharging_power") | int(0)
+                  != 0 }}
+              - action: number.set_value
+                target:
+                  entity_id: number.battery_maximum_discharging_power
+                data:
+                  value: "0"
         alias: Charge
       - conditions:
           - condition: trigger
@@ -213,8 +262,18 @@ actions:
             entity_id: binary_sensor.predbat_exporting
             state: "on"
         sequence:
-          - action: script.huawei_disharging_power_5000w
-            data: {}
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ states("number.battery_maximum_charging_power") | int(0) !=
+                  5000 }}
+            then:
+              - action: number.set_value
+                target:
+                  entity_id: number.battery_maximum_discharging_power
+                data:
+                  value: 5000
+            alias: battery_maximum_discharging_power-5000
           - delay: "00:00:10"
           - condition: template
             value_template: |
@@ -237,7 +296,19 @@ actions:
                 entity_id: predbat.status
                 state: Charging, Hold for car
         sequence:
-          - action: script.huawei_discharging_power_0w
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: >-
+                      {{ states("number.battery_maximum_discharging_power") |
+                      int(0) != 0 }}
+                sequence:
+                  - action: number.set_value
+                    target:
+                      entity_id: number.battery_maximum_discharging_power
+                    data:
+                      value: "0"
+            alias: Huawei Discharging Power 0W
         alias: Hold for car. Charging, Hold for car
       - conditions:
           - condition: or
@@ -333,6 +404,7 @@ actions:
           - action: button.press
             target:
               entity_id: button.go_echarger_265216_frc_3
+            data: {}
       - conditions:
           - condition: trigger
             id: Predbat car charging slot
@@ -343,6 +415,7 @@ actions:
           - action: button.press
             target:
               entity_id: button.go_echarger_265216_frc_2
+            data: {}
 variables:
   huawei_device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
 mode: restart
