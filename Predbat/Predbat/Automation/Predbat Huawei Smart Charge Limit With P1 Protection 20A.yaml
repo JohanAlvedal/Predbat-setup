@@ -1,0 +1,136 @@
+alias: Predbat Huawei Smart Charge Limit With P1 Protection 20A
+description: >-
+  Limits Huawei battery charging during daytime and reduces charge power during
+  high grid load or phase current spikes. Optimized for a 20A main fuse while
+  keeping discharge settings untouched.
+triggers:
+  - trigger: time
+    at: "08:00:00"
+    id: day_start
+  - trigger: time
+    at: "22:00:00"
+    id: night_start
+  - trigger: numeric_state
+    entity_id:
+      - sensor.p1_meter_current_phase_1
+      - sensor.p1_meter_current_phase_2
+      - sensor.p1_meter_current_phase_3
+    above: 17
+    for: "00:01:00"
+    id: high_phase_current
+  - trigger: numeric_state
+    entity_id: sensor.p1_meter_current
+    above: 17
+    for: "00:01:00"
+    id: high_total_current
+  - trigger: numeric_state
+    entity_id: sensor.p1_meter_power
+    above: 11000
+    for: "00:01:00"
+    id: high_grid_power
+  - trigger: template
+    value_template: |
+      {{
+        states('sensor.p1_meter_current_phase_1') | float(0) < 14 and
+        states('sensor.p1_meter_current_phase_2') | float(0) < 14 and
+        states('sensor.p1_meter_current_phase_3') | float(0) < 14 and
+        states('sensor.p1_meter_current') | float(0) < 14 and
+        states('sensor.p1_meter_power') | float(0) < 7500
+      }}
+    for: "00:10:00"
+    id: normal_load
+conditions: []
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: day_start
+        sequence:
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=1000]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=0]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: inverter_limit_charge(0)=4000
+      - conditions:
+          - condition: trigger
+            id: night_start
+        sequence:
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=0]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=1000]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=4000]"
+      - conditions:
+          - condition: trigger
+            id:
+              - high_phase_current
+              - high_total_current
+              - high_grid_power
+        sequence:
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=4000]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=0]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: inverter_limit_charge(0)=1000
+      - conditions:
+          - condition: trigger
+            id: normal_load
+        sequence:
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=1000]"
+          - action: select.select_option
+            target:
+              entity_id: select.predbat_manual_api
+            data:
+              option: "[inverter_limit_charge(0)=0]"
+          - choose:
+              - conditions:
+                  - condition: time
+                    after: "06:00:00"
+                    before: "22:00:00"
+                sequence:
+                  - action: select.select_option
+                    target:
+                      entity_id: select.predbat_manual_api
+                    data:
+                      option: inverter_limit_charge(0)=4000
+            default:
+              - action: select.select_option
+                target:
+                  entity_id: select.predbat_manual_api
+                data:
+                  option: "[inverter_limit_charge(0)=4000]"
+mode: restart
