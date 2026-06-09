@@ -1,129 +1,148 @@
-################################################################################
-#                   Various predbat sensors                                    #
-#                       Made By Johan71                                        #
-################################################################################
+###############################################################################
+## PACKAGE: Predbat Energy Today Sensors
+##
+## Creates daily kWh sensors for Predbat from Huawei power sensors.
+##
+## Source sensors that must already exist:
+##   sensor.house_load_power_calc
+##   sensor.power_meter_active_power
+##   sensor.go_echarger_265216_wh
+##
+## Created sensors:
+##   sensor.predbat_house_load_power
+##   sensor.predbat_grid_import_power
+##   sensor.predbat_grid_export_power
+##   sensor.predbat_grid_power
+##   sensor.go_echarger_265216_kwh
+##
+##   sensor.predbat_load_energy
+##   sensor.predbat_import_energy
+##   sensor.predbat_export_energy
+##
+##   sensor.predbat_load_today
+##   sensor.predbat_import_today
+##   sensor.predbat_export_today
+###############################################################################
+
+template:
+  - sensor:
+      - name: "Predbat House load power"
+        unique_id: predbat_house_load_power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set pv_w   = states('sensor.inverter_input_power') | float(0) %}
+          {% set grid_w = states('sensor.power_meter_active_power') | float(0) %}
+          {% set batt_w = states('sensor.batteries_charge_discharge_power') | float(0) %}
+          {{ ([pv_w - grid_w - batt_w, 0] | max) | round(0) }}
+
+      - name: "predbat self-sufficiency now"
+        unique_id: predbat_self_sufficiency_now
+        unit_of_measurement: "%"
+        state: >
+          {% set load_w = states('sensor.predbat_house_load_power') | float(0) %}
+          {% set grid_w = states('sensor.power_meter_active_power') | float(0) %}
+          {% set imp_w  = ([-grid_w, 0] | max) %}
+          {% if load_w > 0 %}
+            {{ ((1 - [imp_w / load_w, 1] | min) * 100) | round(0) }}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: "Predbat grid import power"
+        unique_id: predbat_grid_import_power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        icon: mdi:transmission-tower-import
+        availability: >
+          {{ states('sensor.power_meter_active_power') | is_number }}
+        state: >
+          {% set p = states('sensor.power_meter_active_power') | float %}
+          {{ [(p * -1), 0] | max | round(0) }}
+
+      - name: "Predbat grid export power"
+        unique_id: predbat_grid_export_power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        icon: mdi:transmission-tower-export
+        availability: >
+          {{ states('sensor.power_meter_active_power') | is_number }}
+        state: >
+          {% set p = states('sensor.power_meter_active_power') | float %}
+          {{ [p, 0] | max | round(0) }}
+
+      - name: "go-eCharger 265216 kWh"
+        unique_id: go_echarger_265216_kwh
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        icon: mdi:ev-station
+        availability: >
+          {{ states('sensor.go_echarger_265216_wh') | is_number }}
+        state: >
+          {{ (states('sensor.go_echarger_265216_wh') | float / 1000) | round(3) }}
+
+      - name: "Predbat grid power"
+        unique_id: predbat_grid_power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        icon: mdi:transmission-tower
+        availability: >
+          {{ states('sensor.power_meter_active_power') | is_number }}
+        state: >
+          {{ (states('sensor.power_meter_active_power') | float * -1) | round(0) }}
+
 sensor:
-  - platform: template
-    sensors:
-      pv_power:
-        friendly_name: "PV Power kW"
-        unit_of_measurement: "kW"
-        unique_id: "pv_power"
-        value_template: >
-          {% set sensor_value = states('sensor.inverter_input_power') %}
-          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
-            {{ sensor_value | float(0) / 1000 }}
-          {% else %}
-            0
-          {% endif %}
-          
-      pv_today2:
-        friendly_name: "PV Today kWh"
-        unit_of_measurement: "kWh"
-        value_template: >
-          {% set sensor_value = states('sensor.inverter_daily_yield') %}
-          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
-          {{ sensor_value | float(0) }}
-          {% else %}
-          0
-          {% endif %}
-
-      ev_today_kwh:
-        friendly_name: "EV Today kWh"
-        unit_of_measurement: "kWh"
-        unique_id: "ev_today_kwh"
-        value_template: >
-          {% set sensor_value = states('sensor.go_echarger_265216_wh') %}
-          {% if sensor_value not in ['unknown', 'unavailable', 'none'] %}
-            {{ sensor_value | float(0) / 1000 }}
-          {% else %}
-            0
-          {% endif %}
-
-      go_echarger_kwh:
-        friendly_name: "Go-eCharger Energy kWh"
-        unit_of_measurement: "kWh"
-        unique_id: "go_echarger_kwh"
-        value_template: >
-          {% set eto = states('sensor.go_echarger_265216_eto') %}
-          {% if eto not in ['unknown', 'unavailable', 'none'] %}
-            {{ eto | float(0) / 1000 }}
-          {% else %}
-            0
-          {% endif %}
-
-      battery_capacity_kw:
-        friendly_name: "Battery State of Capacity in kW"
-        unit_of_measurement: "kW"
-        unique_id: "battery_capacity_kw"
-        value_template: >
-          {% set max_capacity_kw = 10 %}
-          {% set soc = states('sensor.battery_state_of_capacity') %}
-          {% if soc not in ['unknown', 'unavailable', 'none'] %}
-            {{ (max_capacity_kw * soc | float(0) / 100) | round(2) }}
-          {% else %}
-            0
-          {% endif %}
-
-##############################################################################
-## Integration sensors (power → energy)
-##############################################################################
+  - platform: integration
+    source: sensor.predbat_house_load_power
+    name: predbat_load_energy
+    unique_id: predbat_load_energy
+    unit_prefix: k
+    unit_time: h
+    round: 4
+    method: left
 
   - platform: integration
-    source: sensor.house_consumption_power
-    name: "House Consumption - Energy"
+    source: sensor.predbat_grid_import_power
+    name: predbat_import_energy
+    unique_id: predbat_import_energy
     unit_prefix: k
-    round: 2
-    unique_id: "house_consumption_energy"
+    unit_time: h
+    round: 4
+    method: left
 
   - platform: integration
-    source: sensor.battery_to_house
-    name: "Battery to House Energy"
+    source: sensor.predbat_grid_export_power
+    name: predbat_export_energy
+    unique_id: predbat_export_energy
     unit_prefix: k
-    round: 2
-    unique_id: "battery_to_house_energy"
-
-##############################################################################
-## Utility meters - Daily energy tracking
-##############################################################################
+    unit_time: h
+    round: 4
+    method: left
 
 utility_meter:
-  import_today:
-    source: sensor.power_meter_consumption
+  predbat_load_today:
+    source: sensor.predbat_load_energy
     cycle: daily
-    unique_id: "import_today"
 
-  export_today:
-    source: sensor.power_meter_exported
+  predbat_import_today:
+    source: sensor.predbat_import_energy
     cycle: daily
-    unique_id: "export_today"
 
-  pv_today:
-    source: sensor.solar_energy_riemann
+  predbat_export_today:
+    source: sensor.predbat_export_energy
     cycle: daily
-    unique_id: "pv_today"
 
-  load_today:
-    source: sensor.house_consumption_energy
-    cycle: daily
-    unique_id: "load_today"
-
-  ev_today:
-    source: sensor.go_echarger_265216_wh
-    cycle: daily
-    unique_id: "ev_today"
-##############################################################################
-## Input text
-##############################################################################
-    
-input_text:
-  huawei_capacity_charge_periods:
-    name: Huawei capacity charge periods
-    max: 255
-  huawei_capacity_export_periods:
-    name: Huawei capacity export periods
-    max: 255
-
-###############################################################################
-##     END
-###############################################################################
+input_number:
+  predbat_ev_soc:
+    name: "Predbat EV target SOC"
+    min: 0
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+    mode: box
+    icon: mdi:car-electric
