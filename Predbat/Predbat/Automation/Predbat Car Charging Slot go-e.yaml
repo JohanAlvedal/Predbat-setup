@@ -1,0 +1,36 @@
+alias: Predbat Car Charging Slot go-e
+description: >-
+  Monitors the Predbat car charging slot sensor and sends MQTT commands to the
+  go-eCharger to start or stop charging accordingly.
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.predbat_car_charging_slot
+conditions: []
+actions:
+  - variables:
+      goe_charger_id: "265216"
+      goe_topic: go-eCharger/{{ goe_charger_id }}/frc/set
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: binary_sensor.predbat_car_charging_slot
+            state: "on"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: "{{ goe_topic }}"
+              payload: "2"
+              qos: 0
+              retain: false
+      - conditions:
+          - condition: state
+            entity_id: binary_sensor.predbat_car_charging_slot
+            state: "off"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: "{{ goe_topic }}"
+              payload: "1"
+              qos: 0
+              retain: false
+mode: single
